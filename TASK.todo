@@ -6,11 +6,12 @@
     ✔ implement editor window and simple menu boilerplate @started(13-05-2021 15:26) @done(13-05-2021 23:38) @lasted(8h12m21s)
     ✔ implement undostack @started(11-05-2021 18:44) @done(11-05-2021 22:41) @lasted(3h57m52s)
     ✔ implement edge id @done(09-05-2021 20:03)
+    ✔ refactor code to call scene action using menu commands @high @done(21-05-2021 21:54)
     ☐ implement undo for change in positions of nodes @low
-    ☐ create base class for all graphicsitems that implements uuid generation @low 
 
   fix:
     ✔ edge and socket were not connected properly @done(09-05-2021 20:03)
+    ✔ change QUndoCommand `redo` to `do` @critical @done(21-05-2021 21:54)
 
 21-05-03:
   tasks:

@@ -21,12 +21,12 @@ class JEditorWindow(QMainWindow):
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint)
         # self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
 
-        menuBar = JMenuBar(self._editorWidget.sceneManager)
+        self.setCentralWidget(self._editorWidget)
+
+        menuBar = JMenuBar(self._editorWidget)
         self.setMenuBar(menuBar)
 
         self.statusBar().showMessage("this is message")
-
-        self.setCentralWidget(self._editorWidget)
 
         self.setGeometry(200, 200, JCONSTANTS.EDITOR.WIDTH, JCONSTANTS.EDITOR.HEIGHT)
         self.setWindowTitle(JCONSTANTS.EDITOR.TITLE)

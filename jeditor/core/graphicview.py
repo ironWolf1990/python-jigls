@@ -1,5 +1,3 @@
-from jeditor.core import graphicscene
-from jeditor.core.commands import EdgeRemoveCommand, NodeRemoveCommand
 import logging
 import typing
 from copy import deepcopy
@@ -101,7 +99,6 @@ class JGraphicView(QtWidgets.QGraphicsView):
                 JGraphicSocket,
             )
         ):
-            self._currentState = JCONSTANTS.GRVIEW.OP_MODE_EDGE_DRAG
             self._StartEdgeDrag(
                 self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
             )
@@ -114,13 +111,6 @@ class JGraphicView(QtWidgets.QGraphicsView):
             self._EndEdgeDrag(
                 self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform())
             )
-
-        # * debug
-        elif event.button() == QtCore.Qt.MidButton:
-            logger.debug("items in scene")
-            for item in self.scene().items():
-                if isinstance(item, (JGraphicEdge, JGraphicNode, JGraphicSocket)):
-                    logger.debug(item)
 
         super().mousePressEvent(event)
 
@@ -145,8 +135,7 @@ class JGraphicView(QtWidgets.QGraphicsView):
 
         # * Edge drag
         elif self._currentState == JCONSTANTS.GRVIEW.OP_MODE_EDGE_DRAG:
-            self._tempEdgeDragObj.DragPos = self.mapToScene(event.pos())
-            self._tempEdgeDragObj.update()
+            self._sceneManager._edgeManager.DragPosition(self.mapToScene(event.pos()))
 
         super().mouseMoveEvent(event)
 
@@ -211,28 +200,44 @@ class JGraphicView(QtWidgets.QGraphicsView):
             self.scale(zoomFactor, zoomFactor)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+
+        # * delete an item in scene
         if event.key() == QtCore.Qt.Key_Delete:
-            self._RemoveFromScene()
+            self._sceneManager.RemoveFromScene()
+
+        # * save to file
         elif (
             event.key() == QtCore.Qt.Key_S
             and event.modifiers() == QtCore.Qt.ControlModifier
         ):
             self._sceneManager.SaveToFile()
+
+        # * load from file
         elif (
             event.key() == QtCore.Qt.Key_O
             and event.modifiers() == QtCore.Qt.ControlModifier
         ):
             self._sceneManager.Deserialize(self._sceneManager.LoadFromFile())
+
+        # * undo
         elif (
             event.key() == QtCore.Qt.Key_Z
             and event.modifiers() == QtCore.Qt.ControlModifier
         ):
             self._sceneManager.undoStack.undo()
+
+        # * redo
         elif (
             event.key() == QtCore.Qt.Key_R
             and event.modifiers() == QtCore.Qt.ControlModifier
         ):
             self._sceneManager.undoStack.redo()
+
+        # * debug
+        elif event.key() == QtCore.Qt.Key_D and event.modifiers() == (
+            QtCore.Qt.ShiftModifier | QtCore.Qt.ControlModifier
+        ):
+            self._sceneManager.DebugDump()
 
         super().keyPressEvent(event)
 
@@ -251,197 +256,20 @@ class JGraphicView(QtWidgets.QGraphicsView):
         self._rubberband.hide()
         return painterPath
 
-    def _StartEdgeDrag(self, item: typing.Any) -> typing.Any:
-
+    def _StartEdgeDrag(self, item: QtWidgets.QGraphicsItem):
         assert isinstance(item, JGraphicSocket)
-        if item.socketType == JCONSTANTS.GRSOCKET.TYPE_INPUT:
-            self._currentState = JCONSTANTS.GRVIEW.OP_MODE_DEFAULT
-            return
-
-        if item.multiConnection:
-            self._tempEdgeDragObj = JGraphicEdge.DragNewEdge(
-                startSocket=item,
-                dragPos=item.scenePos(),
-            )
-            self.scene().addItem(self._tempEdgeDragObj)
-            self._tempEdgeDragObj.update()
-            self._tempSocket = item
+        if self._sceneManager._SceneManagerStartEdgeDrag(item):
+            self._currentState = JCONSTANTS.GRVIEW.OP_MODE_EDGE_DRAG
             self.setCursor(QtCore.Qt.DragLinkCursor)
 
-        elif not item.AtMaxLimit():
-            self._tempEdgeDragObj = JGraphicEdge.DragNewEdge(
-                startSocket=item,
-                dragPos=item.scenePos(),
-            )
-            self.scene().addItem(self._tempEdgeDragObj)
-            self._tempEdgeDragObj.update()
-            self._tempSocket = item
-            self.setCursor(QtCore.Qt.DragLinkCursor)
-        else:
-            self._currentState = JCONSTANTS.GRVIEW.OP_MODE_DEFAULT
-
-    def _EndEdgeDrag(self, item: typing.Any):
-
-        assert isinstance(self._tempEdgeDragObj, JGraphicEdge)
-        if isinstance(item, JGraphicSocket):
-
-            # * check same socket
-            if self._tempSocket.socketId == item.socketId:
-                logger.warning(f"tried connecting same socket")
-                self._tempEdgeDragObj.DisconnectFromSockets()
-                self.scene().removeItem(self._tempEdgeDragObj)
-                self._ResetEdgeDrag()
-
-            # * check if same socket type, intput type
-            elif self._tempSocket.socketType == item.socketType:
-                logger.warning(f"tried connecting same socket type")
-                self._tempEdgeDragObj.DisconnectFromSockets()
-                self.scene().removeItem(self._tempEdgeDragObj)
-                self._ResetEdgeDrag()
-
-            # * check if connecttion possible, non multi connection type
-            elif item.AtMaxLimit():
-                logger.warning(f"socket cannot add edge, maxlimit")
-                self._tempEdgeDragObj.DisconnectFromSockets()
-                self.scene().removeItem(self._tempEdgeDragObj)
-                self._ResetEdgeDrag()
-
-            # * check sockets belong to same parent
-            elif self._tempEdgeDragObj.startSocket.nodeId == item.nodeId:
-                logger.warning(f"socket belong to same parent")
-                self._tempEdgeDragObj.DisconnectFromSockets()
-                self.scene().removeItem(self._tempEdgeDragObj)
-                self._ResetEdgeDrag()
-
-            else:
-                # * check dupliate edge
-                for edgeInScene in list(
-                    filter(
-                        lambda edge: isinstance(edge, JGraphicEdge)
-                        and edge.edgeId != self._tempEdgeDragObj.edgeId
-                        and edge.startSocket.socketId
-                        == self._tempEdgeDragObj.startSocket.socketId,
-                        self.scene().items(),
-                    )
-                ):
-                    assert isinstance(edgeInScene, JGraphicEdge)
-                    if edgeInScene.destinationSocket is item:
-                        logger.warning(f"duplicate edge")
-                        self._tempEdgeDragObj.DisconnectFromSockets()
-                        self.scene().removeItem(self._tempEdgeDragObj)
-                        self._ResetEdgeDrag()
-                        return
-
-                # * only add edge if all above fail
-                self._tempEdgeDragObj.destinationSocket = item
-                self._ResetEdgeDrag()
-
-        elif not isinstance(item, JGraphicSocket):
-            logger.warning(f"clicked no socket type")
-            self._tempEdgeDragObj.DisconnectFromSockets()
-            self.scene().removeItem(self._tempEdgeDragObj)
-            self._ResetEdgeDrag()
-            self.setCursor(QtCore.Qt.ArrowCursor)
-            self.setInteractive(True)
+    def _EndEdgeDrag(self, item: QtWidgets.QGraphicsItem):
+        self._sceneManager._SceneManagerEndEdgeDrag(item)
+        self._currentState = JCONSTANTS.GRVIEW.OP_MODE_DEFAULT
+        self.setCursor(QtCore.Qt.ArrowCursor)
 
     def _StartEdgeEditing(self, edge: JGraphicEdge, cursor: QtCore.QPointF):
         self._tempEdgeDragObj = edge
-        self._tempEdgeDragObj.DragPos = cursor
+        self._tempEdgeDragObj.dragPos = cursor
         self._tempSocket = edge.startSocket
         self.setCursor(QtCore.Qt.DragLinkCursor)
         self._tempEdgeDragObj.update()
-
-    def _ResetEdgeDrag(self):
-        assert isinstance(self._tempEdgeDragObj, JGraphicEdge)
-        self._tempSocket = None
-        self._tempEdgeDragObj = None
-        self._currentState = JCONSTANTS.GRVIEW.OP_MODE_DEFAULT
-        self.setCursor(QtCore.Qt.ArrowCursor)
-        # logger.debug("reset")
-
-    def _RemoveFromScene(self):
-
-        if not self.scene().selectedItems():
-            logger.debug("no items to delete")
-            return
-
-        edgeIdRemove: typing.Set[str] = set()
-        nodeIdRemove: typing.Set[str] = set()
-
-        for item in self.scene().selectedItems():
-            if isinstance(item, JGraphicNode):
-                nodeIdRemove.add(item.nodeId)
-                for socket in item.socketManager.socketList:
-                    edgeIdRemove |= set(socket.edgeList)
-            elif isinstance(item, JGraphicEdge):
-                edgeIdRemove.add(item.edgeId)
-            else:
-                logger.debug(f"unknown item selected in delete type {type(item)}")
-
-        logger.debug(f"nodes marked for removal {nodeIdRemove}")
-        logger.debug(f"edges marked for removal {edgeIdRemove}")
-
-        self._sceneManager.undoStack.beginMacro("remove item")
-        # * first always remove edges, easier to implement undo stack!
-        self._RemoveEdgesFromScene(edgeIdRemove)
-        self._RemoveNodesFromScene(nodeIdRemove)
-        self._sceneManager.undoStack.endMacro()
-
-    def _RemoveNodesFromScene(self, nodes: typing.Set[str]):
-        for node in nodes:
-            self._RemoveNodeFromScene(node)
-
-    def _RemoveEdgesFromScene(self, edges: typing.Set[str]):
-        for edge in edges:
-            self._RemoveEdgeFromScene(edge)
-
-    def _RemoveNodeFromScene(self, nodeId: str):
-        node_ = list(
-            filter(
-                lambda node: isinstance(node, JGraphicNode) and node.nodeId == nodeId,
-                self.scene().items(),
-            )
-        )
-        assert len(node_) == 1, logger.error(
-            f"error fetching node {nodeId} for removal"
-        )
-
-        node__ = node_[0]
-        assert isinstance(node__, JGraphicNode)
-        self.scene().removeItem(node__)
-
-        logger.debug(f"remove node {nodeId}")
-        self._sceneManager.undoStack.beginMacro("remove node")
-        self._sceneManager.undoStack.push(
-            NodeRemoveCommand(
-                graphicScene=self._sceneManager.graphicsScene, node=node__
-            )
-        )
-        self._sceneManager.undoStack.endMacro()
-
-    def _RemoveEdgeFromScene(self, edgeId: str):
-        edge_ = list(
-            filter(
-                lambda edge: isinstance(edge, JGraphicEdge) and edge.edgeId == edgeId,
-                self.scene().items(),
-            )
-        )
-        assert len(edge_) == 1, logger.error(
-            f"error fetching node {edgeId} for removal"
-        )
-
-        edge__ = edge_[0]
-        assert isinstance(edge__, JGraphicEdge)
-
-        edge__.DisconnectFromSockets()
-
-        logger.debug(f"remove edge {edgeId}")
-        self.scene().removeItem(edge__)
-
-        self._sceneManager.undoStack.beginMacro("remove edge")
-        self._sceneManager.undoStack.push(
-            EdgeRemoveCommand(
-                graphicScene=self._sceneManager.graphicsScene, edge=edge__
-            )
-        )
-        self._sceneManager.undoStack.endMacro()

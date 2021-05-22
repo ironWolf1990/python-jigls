@@ -44,61 +44,6 @@ class JGraphicEdge(QGraphicsPathItem):
 
         self.initUI()
 
-    @property
-    def startSocket(self):
-        return self._startSocket
-
-    @property
-    def edgeId(self):
-        return self._edgeId
-
-    @property
-    def destinationSocket(self):
-        return self._destinationSocket
-
-    @destinationSocket.setter
-    def destinationSocket(self, socket: "JGraphicSocket") -> None:
-        assert not socket.AtMaxLimit(), logger.warning(
-            f"max edge limit reached for socket {socket.socketId}"
-        )
-        self._destinationSocket = socket
-        self._destinationSocket.ConnectEdge(self._edgeId)
-        self._dragPos = QtCore.QPointF()
-
-    @property
-    def DragPos(self) -> QtCore.QPointF:
-        return self._dragPos
-
-    @DragPos.setter
-    def DragPos(self, pos: QtCore.QPointF):
-        self._dragPos = pos
-        if self._destinationSocket is not None:
-            self._destinationSocket.DisconnectEdge(self._edgeId)
-            logger.info("removed edge from destination socket, edge is repositioning")
-            self._destinationSocket = None
-
-    @property
-    def sourcePos(self):
-        return self._startSocket.scenePos()
-
-    @property
-    def destinationPos(self) -> QtCore.QPointF:
-        if self._destinationSocket is not None:
-            return self._destinationSocket.scenePos()
-        return self._dragPos
-
-    @property
-    def endPos(self) -> QtCore.QPointF:
-        return self.destinationPos
-
-    @property
-    def edgePathType(self) -> int:
-        return self._edgePathType
-
-    @edgePathType.setter
-    def edgePathType(self, pathType: int) -> None:
-        self._edgePathType = pathType
-
     def initUI(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setZValue(-1.0)
@@ -128,6 +73,62 @@ class JGraphicEdge(QGraphicsPathItem):
         painter.drawPath(self.path())
 
         self.UpdatePath()
+
+    @property
+    def startSocket(self):
+        return self._startSocket
+
+    @property
+    def edgeId(self):
+        return self._edgeId
+
+    @property
+    def destinationSocket(self):
+        return self._destinationSocket
+
+    @destinationSocket.setter
+    def destinationSocket(self, socket: "JGraphicSocket") -> None:
+        assert not socket.AtMaxLimit(), logger.warning(
+            f"max edge limit reached for socket {socket.socketId}"
+        )
+        self._destinationSocket = socket
+        self._destinationSocket.ConnectEdge(self._edgeId)
+        self._dragPos = QtCore.QPointF()
+
+    @property
+    def dragPos(self) -> QtCore.QPointF:
+        return self._dragPos
+
+    @dragPos.setter
+    def dragPos(self, pos: QtCore.QPointF):
+        self._dragPos = pos
+        if self._destinationSocket is not None:
+            self._destinationSocket.DisconnectEdge(self._edgeId)
+            logger.info("removed edge from destination socket, edge is repositioning")
+            self._destinationSocket = None
+
+    @property
+    def sourcePos(self):
+        return self._startSocket.scenePos()
+
+    @property
+    def destinationPos(self) -> QtCore.QPointF:
+        if self._destinationSocket is not None:
+            return self._destinationSocket.scenePos()
+        return self._dragPos
+
+    @property
+    def endPos(self) -> QtCore.QPointF:
+        return self.destinationPos
+
+    @property
+    def edgePathType(self) -> int:
+        return self._edgePathType
+
+    @edgePathType.setter
+    def edgePathType(self, pathType: int) -> None:
+        self._edgePathType = pathType
+        self.update()
 
     def DisconnectFromSockets(self):
         if self._startSocket is not None:
@@ -189,5 +190,5 @@ class JGraphicEdge(QGraphicsPathItem):
             destinationSocket=None,
             edgePathType=JCONSTANTS.GREDGE.PATH_BEZIER,
         )
-        instanceEdge.DragPos = dragPos
+        instanceEdge.dragPos = dragPos
         return instanceEdge

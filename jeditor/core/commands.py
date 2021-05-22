@@ -14,7 +14,7 @@ class NodeAddCommand(QtWidgets.QUndoCommand):
     def undo(self) -> None:
         self._graphicScene.removeItem(self._node)
 
-    def redo(self) -> None:
+    def do(self) -> None:
         self._graphicScene.addItem(self._node)
 
 
@@ -28,7 +28,7 @@ class NodeRemoveCommand(QtWidgets.QUndoCommand):
     def undo(self) -> None:
         self._graphicScene.addItem(self._node)
 
-    def redo(self) -> None:
+    def do(self) -> None:
         self._graphicScene.removeItem(self._node)
 
 
@@ -56,9 +56,11 @@ class EdgeAddCommand(QtWidgets.QUndoCommand):
 
     def undo(self) -> None:
         self._graphicScene.removeItem(self._edge)
+        self._edge.DisconnectFromSockets()
 
-    def redo(self) -> None:
+    def do(self) -> None:
         self._graphicScene.addItem(self._edge)
+        self._edge.ReconnectToSockets()
 
 
 class EdgeRemoveCommand(QtWidgets.QUndoCommand):
@@ -72,6 +74,6 @@ class EdgeRemoveCommand(QtWidgets.QUndoCommand):
         self._edge.ReconnectToSockets()
         self._graphicScene.addItem(self._edge)
 
-    def redo(self) -> None:
+    def do(self) -> None:
         self._edge.DisconnectFromSockets()
         self._graphicScene.removeItem(self._edge)

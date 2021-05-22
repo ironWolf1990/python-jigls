@@ -1,29 +1,40 @@
+import logging
+from functools import partial
 from typing import Callable, Optional
-from jeditor.core.scenemanager import JSceneManager
-from jeditor.stylesheet import STYLE_QMENUBAR
+
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QAction
+
+from jeditor.core.editorwidget import JEditorWidget
+from jeditor.core.scenemanager import JSceneManager
+from jeditor.logger import logger
+from jeditor.stylesheet import STYLE_QMENUBAR
+
+logger = logging.getLogger(__name__)
 
 # https://zetcode.com/gui/pyqt5/menustoolbars/
 
 
 def CreateAction(
-    parent: QtWidgets.QMenuBar,
+    menuBar: QtWidgets.QMenuBar,
     name: str,
-    shortcut: str,
-    tooltip: str,
+    shortcut: Optional[str] = None,
+    tooltip: Optional[str] = None,
     callback: Optional[Callable] = None,
 ) -> QAction:
 
-    action = QAction(name, parent=parent)
-    action.setShortcut(shortcut)
-    action.setToolTip(tooltip)
-    action.triggered.connect(callback)
+    action = QAction(name, parent=menuBar)
+    if shortcut is not None:
+        action.setShortcut(shortcut)
+    if tooltip is not None:
+        action.setToolTip(tooltip)
+    if callback is not None:
+        action.triggered.connect(callback)
     return action
 
 
 class JMenuBar(QtWidgets.QMenuBar):
-    def __init__(self, editorWidget: JSceneManager):
+    def __init__(self, editorWidget: JEditorWidget):
         super().__init__(parent=None)
         self._editorWidget = editorWidget
         self.setStyleSheet(STYLE_QMENUBAR)
@@ -37,11 +48,303 @@ class JMenuBar(QtWidgets.QMenuBar):
         graphMenu = self.addMenu("&Graph")
         helpMenu = self.addMenu("&Help")
 
+        # * file menu
         fileMenu.addAction(
             CreateAction(
-                self, "&Open", "Ctrl+1", "Open new graph model", self.OpenModel
+                self,
+                "&New",
+                "Ctrl+N",
+                "create new graph model",
+                partial(New, self._editorWidget.sceneManager),
+            )
+        )
+        fileMenu.addAction(
+            CreateAction(
+                self,
+                "&Open",
+                "Ctrl+O",
+                "open new graph model",
+                partial(Load, self._editorWidget.sceneManager),
+            )
+        )
+        fileMenu.addSeparator()
+        fileMenu.addAction(
+            CreateAction(
+                self,
+                "&Save",
+                "Ctrl+S",
+                "save the graph model",
+                partial(Save, self._editorWidget.sceneManager),
+            )
+        )
+        fileMenu.addAction(
+            CreateAction(
+                self,
+                "Save &As",
+                "Ctrl+Shift+S",
+                "save graph model as",
+                partial(SaveAs, self._editorWidget.sceneManager),
+            )
+        )
+        fileMenu.addSeparator()
+        fileMenu.addAction(
+            CreateAction(
+                self,
+                "&Close",
+                "Ctrl+W",
+                "close model",
+                partial(Close, self._editorWidget.sceneManager),
+            )
+        )
+        fileMenu.addAction(
+            CreateAction(
+                self,
+                "E&xit",
+                "Ctrl+Q",
+                "exit program",
+                partial(Exit, self._editorWidget.sceneManager),
             )
         )
 
-    def OpenModel(self):
-        print("dis is a test")
+        # * edit menu
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "&Delete",
+                "Delete",
+                "delete graphics item(s)",
+                partial(Delete, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "&Undo",
+                "Ctrl+Z",
+                "create new graph model",
+                partial(Undo, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "&Redo",
+                "Ctrl+R",
+                "create new graph model",
+                partial(Redo, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addSeparator()
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "Select &All",
+                "Ctrl+A",
+                "select all graphics item(s)",
+                partial(SelectAll, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "D&eselect All",
+                "Ctrl+Shift+A",
+                "deselect all graphics item(s)",
+                partial(DeselectAll, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addSeparator()
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "Cu&t",
+                "Ctrl+X",
+                "create new graph model",
+                partial(Cut, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "&Copy",
+                "Ctrl+C",
+                "create new graph model",
+                partial(Copy, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "&Paste",
+                "Ctrl+P",
+                "create new graph model",
+                partial(Paste, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addSeparator()
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "&Find",
+                "Ctrl+F",
+                "create new graph model",
+                partial(Find, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "&Search",
+                "Ctrl+S",
+                "create new graph model",
+                partial(Search, self._editorWidget.sceneManager),
+            )
+        )
+
+        # * help menu
+        helpMenu.addAction(
+            CreateAction(
+                self,
+                "&Welcome",
+                tooltip="welcome notes",
+                callback=partial(Welcome, self._editorWidget.sceneManager),
+            )
+        )
+        helpMenu.addAction(
+            CreateAction(
+                self,
+                "&Documentation",
+                tooltip="documentation",
+                callback=partial(Documentation, self._editorWidget.sceneManager),
+            )
+        )
+        helpMenu.addAction(
+            CreateAction(
+                self,
+                "&Release Notes",
+                tooltip="changelog",
+                callback=partial(Changelog, self._editorWidget.sceneManager),
+            )
+        )
+        helpMenu.addSeparator()
+        helpMenu.addAction(
+            CreateAction(
+                self,
+                "&Keyboard Shortcuts",
+                tooltip="shortcut key bindings",
+                callback=partial(Shortcuts, self._editorWidget.sceneManager),
+            )
+        )
+        helpMenu.addSeparator()
+        helpMenu.addAction(
+            CreateAction(
+                self,
+                "D&eveloper Debug",
+                shortcut="Ctrl+Shift+D",
+                tooltip="jeditor dump debug log",
+                callback=partial(Debug, self._editorWidget.sceneManager),
+            )
+        )
+        helpMenu.addSeparator()
+        helpMenu.addAction(
+            CreateAction(
+                self,
+                "&About",
+                tooltip="about jeditor",
+                callback=partial(About, self._editorWidget.sceneManager),
+            )
+        )
+
+
+def New(sceneManager: JSceneManager):
+    logger.debug("new")
+
+
+def Load(sceneManager: JSceneManager):
+    logger.debug("load")
+    sceneManager.Deserialize(sceneManager.LoadFromFile())
+
+
+def Close(sceneManager: JSceneManager):
+    logger.debug("close")
+
+
+def Exit(sceneManager: JSceneManager):
+    logger.debug("exit")
+
+
+def Save(sceneManager: JSceneManager):
+    logger.debug("save")
+    sceneManager.SaveToFile()
+
+
+def SaveAs(sceneManager: JSceneManager):
+    logger.debug("save as")
+
+
+def Delete(sceneManager: JSceneManager):
+    logger.debug("delete")
+    sceneManager.RemoveFromScene()
+
+
+def Undo(sceneManager: JSceneManager):
+    logger.debug("undo")
+    sceneManager.undoStack.undo()
+
+
+def Redo(sceneManager: JSceneManager):
+    logger.debug("redo")
+    sceneManager.undoStack.redo()
+
+
+def SelectAll(sceneManager: JSceneManager):
+    logger.debug("select all")
+
+
+def DeselectAll(sceneManager: JSceneManager):
+    logger.debug("deselect all")
+
+
+def Cut(sceneManager: JSceneManager):
+    logger.debug("cut")
+
+
+def Copy(sceneManager: JSceneManager):
+    logger.debug("copy")
+
+
+def Paste(sceneManager: JSceneManager):
+    logger.debug("paste")
+
+
+def Find(sceneManager: JSceneManager):
+    logger.debug("find")
+
+
+def Search(sceneManager: JSceneManager):
+    logger.debug("search")
+
+
+def Welcome(sceneManager: JSceneManager):
+    logger.debug("welcome")
+
+
+def Documentation(sceneManager: JSceneManager):
+    logger.debug("documentation")
+
+
+def Changelog(sceneManager: JSceneManager):
+    logger.debug("changelog")
+
+
+def Shortcuts(sceneManager: JSceneManager):
+    logger.debug("shortcuts")
+
+
+def Debug(sceneManager: JSceneManager):
+    logger.debug("debug")
+    sceneManager.DebugDump()
+
+
+def About(sceneManager: JSceneManager):
+    logger.debug("about")
