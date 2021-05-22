@@ -216,7 +216,8 @@ class JSceneManager(QtCore.QObject):
 
     def DebugDump(self):
         print("")
-        logger.debug(f"{10*'-'} DEBUG {8*'-'}")
+        logger.debug(f"{30*'='}")
+        logger.debug(f"{10*'-'} DEBUG")
         logger.debug(f"{10*'-'} NODES IN SCENE")
         for item in self._graphicsScene.items():
             if isinstance(item, (JGraphicNode)):
@@ -225,4 +226,4 @@ class JSceneManager(QtCore.QObject):
         for item in self._graphicsScene.items():
             if isinstance(item, (JGraphicEdge)):
                 logger.debug(item)
-        logger.debug(f"{25*'-'}\n")
+        logger.debug(f"{30*'='}\n")
