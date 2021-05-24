@@ -1,3 +1,4 @@
+from jeditor.core.constants import JCONSTANTS
 from jeditor.stylesheet import STYLE_SPLASH
 import typing
 from PyQt5 import QtCore
@@ -13,7 +14,6 @@ from PyQt5.QtWidgets import (
 
 class StartUp(QDialog):
 
-    # https://www.youtube.com/watch?v=Ap865V3sAdw
     finish = QtCore.pyqtSignal(bool)
 
     def __init__(
@@ -47,7 +47,7 @@ class StartUp(QDialog):
         splash.setAlignment(
             QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter  # type:ignore
         )
-        splash.setPixmap(QPixmap(r"resources/logo.png"))
+        splash.setPixmap(QPixmap(JCONSTANTS.EDITOR.SPLASH_IMAGE))
         self.layout().addWidget(splash)
 
         self.timer = QTimer()

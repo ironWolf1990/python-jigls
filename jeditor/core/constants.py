@@ -4,6 +4,7 @@ class JCONSTANTS:
         HEIGHT: int = 720
         TITLE: str = "J-Editor"
         SPLASH: bool = True
+        SPLASH_IMAGE: str = r"resources/splash.png"
 
     class GRSCENE:
         BACKGROUND_COLOR: str = "#393939"

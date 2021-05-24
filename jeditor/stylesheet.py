@@ -33,6 +33,6 @@ QMenu::separator {
 
 STYLE_SPLASH = """
 QFrame {
-    background-color: #2F4454;
+    background-color: #0A052C;
 }
 """
