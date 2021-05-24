@@ -1,5 +1,10 @@
-from jeditor.core.edgemanager import JEdgeDragging
-from jeditor.core.commands import EdgeAddCommand, EdgeRemoveCommand, NodeRemoveCommand
+from jeditor.core.edgemanager import JEdgeDragging, JEdgeRerouting
+from jeditor.core.commands import (
+    EdgeAddCommand,
+    EdgeRemoveCommand,
+    EdgeRerouteCommand,
+    NodeRemoveCommand,
+)
 import json
 import logging
 from typing import Dict, List, Optional, Tuple
@@ -24,11 +29,13 @@ class JSceneManager(QtCore.QObject):
         super().__init__(parent=None)
 
         self._graphicsScene = JGraphicScene()
+
         self._nodeFactory = JNodeFactory()
         self._undoStack = QUndoStack(self._graphicsScene)
-        self._edgeManager = JEdgeDragging(self._graphicsScene)
+        self._edgeDragging = JEdgeDragging(self._graphicsScene)
+        self._edgeReroute = JEdgeRerouting(self._graphicsScene)
 
-        self._graphicsScene.SetGraphicsSceneWH(
+        self._graphicsScene.SetWidthHeight(
             JCONSTANTS.GRSCENE.WIDTH, JCONSTANTS.GRSCENE.HEIGHT
         )
 
@@ -69,7 +76,10 @@ class JSceneManager(QtCore.QObject):
 
     def Deserialize(self, data: Dict):
         logger.info("deserializing")
+
         self._graphicsScene.clear()
+        self._undoStack.clear()
+
         for node in data["nodes"]:
             instanceNode = JGraphicNode.Deserialize(node)
             self._graphicsScene.addItem(instanceNode)
@@ -114,25 +124,75 @@ class JSceneManager(QtCore.QObject):
             data = json.load(file)
             return data
 
-    def _SceneManagerStartEdgeDrag(self, item: QtWidgets.QGraphicsItem) -> bool:
+    def StartEdgeDrag(self, item: QtWidgets.QGraphicsItem) -> bool:
         assert isinstance(item, JGraphicSocket)
-        return self._edgeManager.StartDrag(item)
+        return self._edgeDragging.StartDrag(item)
 
-    def _SceneManagerEndEdgeDrag(self, item: QtWidgets.QGraphicsItem) -> bool:
-        ret, edge = self._edgeManager.EndDrag(item)
+    def EndEdgeDrag(self, item: QtWidgets.QGraphicsItem) -> bool:
+        ret = self._edgeDragging.EndDrag(item)
         if ret:
+            edge = self._edgeDragging._tempEdge
             assert edge is not None
+
             logger.debug(f"add new edge {edge.edgeId}")
+
             self.undoStack.beginMacro("add edge")
             self.undoStack.push(
                 EdgeAddCommand(graphicScene=self.graphicsScene, edge=edge)
             )
             self.undoStack.endMacro()
-            self._edgeManager._Reset()
+
+            self._edgeDragging.Reset()
+
+        return ret
+
+    def StartEdgeReRoute(self, cursorPos: QtCore.QPointF) -> bool:
+        if len(self._graphicsScene.selectedItems()) == 0:
+            logger.warning("no edge selected for rerouting")
+            return False
+        elif len(self._graphicsScene.selectedItems()) > 1:
+            logger.warning("multiple items selected for rerouting. select 1 edge")
+            return False
+
+        assert self._graphicsScene.selectedItems(), logger.error(
+            f"initial edge rerouting condition check failed"
+        )
+
+        item = self._graphicsScene.selectedItems()[0]
+
+        if not isinstance(item, JGraphicEdge):
+            logger.warning("none edge type selected for rerouting")
+            return False
+        elif isinstance(item, JGraphicEdge):
+            self._edgeReroute.StartRerouting(item, cursorPos)
+            return True
+
+        logger.error("edge rerouting failed")
+        return False
+
+    def EndEdgeReRoute(self, item: QtWidgets.QGraphicsItem) -> bool:
+        ret = self._edgeReroute.EndRerouting(item)
+        if ret:
+            edge = self._edgeReroute._tempEdge
+            nDestinationSocket = self._edgeReroute._nDestinationSocket
+
+            assert edge is not None
+            assert nDestinationSocket is not None
+
+            logger.debug(f"rerouting edge {edge.edgeId}")
+            self.undoStack.beginMacro("rerouting edge")
+            self.undoStack.push(
+                EdgeRerouteCommand(
+                    graphicScene=self.graphicsScene,
+                    edge=edge,
+                    nDestinationSocket=nDestinationSocket,
+                )
+            )
+            self.undoStack.endMacro()
+            self._edgeReroute.Reset()
         return ret
 
     def RemoveFromScene(self):
-
         if not self._graphicsScene.selectedItems():
             logger.debug("no items to delete")
             return
@@ -180,7 +240,6 @@ class JSceneManager(QtCore.QObject):
 
         node__ = node_[0]
         assert isinstance(node__, JGraphicNode)
-        self._graphicsScene.removeItem(node__)
 
         logger.debug(f"remove node {nodeId}")
         self.undoStack.beginMacro("remove node")
@@ -203,27 +262,22 @@ class JSceneManager(QtCore.QObject):
         edge__ = edge_[0]
         assert isinstance(edge__, JGraphicEdge)
 
-        edge__.DisconnectFromSockets()
-
         logger.debug(f"remove edge {edgeId}")
-        self._graphicsScene.removeItem(edge__)
-
         self.undoStack.beginMacro("remove edge")
         self.undoStack.push(
             EdgeRemoveCommand(graphicScene=self.graphicsScene, edge=edge__)
         )
         self.undoStack.endMacro()
 
-    def DebugDump(self):
-        print("")
-        logger.debug(f"{30*'='}")
-        logger.debug(f"{10*'-'} DEBUG")
-        logger.debug(f"{10*'-'} NODES IN SCENE")
+    def DebugSceneInformation(self):
+        print(f"\n{30*'='}\n{10*'-'} SCENE NODES")
         for item in self._graphicsScene.items():
             if isinstance(item, (JGraphicNode)):
-                logger.debug(item)
-        logger.debug(f"{10*'-'} EDGES IN SCENE")
+                print(item.nodeId)
+        print(f"{10*'-'} SCENE EDGES")
         for item in self._graphicsScene.items():
             if isinstance(item, (JGraphicEdge)):
-                logger.debug(item)
-        logger.debug(f"{30*'='}\n")
+                print(item.edgeId)
+        print(f"{10*'-'} SCENE CONNECTIONS")
+        ...
+        print(f"{30*'='}\n")

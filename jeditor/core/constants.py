@@ -1,8 +1,9 @@
 class JCONSTANTS:
     class EDITOR:
-        WIDTH: int = 800
-        HEIGHT: int = 600
+        WIDTH: int = 1280
+        HEIGHT: int = 720
         TITLE: str = "J-Editor"
+        SPLASH: bool = True
 
     class GRSCENE:
         BACKGROUND_COLOR: str = "#393939"
@@ -26,10 +27,11 @@ class JCONSTANTS:
         ZOOM_STEP: int = 1
         ZOOM_RANGE_MIN: int = 0
         ZOOM_RANGE_MAX: int = 10
-        OP_MODE_DEFAULT: int = 0
-        OP_MODE_PAN_VIEW: int = 1
-        OP_MODE_SELECTION: int = 2
-        OP_MODE_EDGE_DRAG: int = 3
+        MODE_DEFAULT: int = 0
+        MODE_PAN_VIEW: int = 1
+        MODE_SELECTION: int = 2
+        MODE_EDGE_DRAG: int = 3
+        MODE_EDGE_REROUTE: int = 4
 
     class GRNODE:
         # https://www.w3schools.com/colors/colors_picker.asp

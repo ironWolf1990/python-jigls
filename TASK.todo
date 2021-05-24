@@ -2,7 +2,7 @@
 09-05-2021:
   tasks:
     ☐ refactor nodeId, edgeId, socketId to just Id
-    ☐ implement cut copy paste
+    ☐ implement cut copy paste @high 
     ✔ implement editor window and simple menu boilerplate @started(13-05-2021 15:26) @done(13-05-2021 23:38) @lasted(8h12m21s)
     ✔ implement undostack @started(11-05-2021 18:44) @done(11-05-2021 22:41) @lasted(3h57m52s)
     ✔ implement edge id @done(09-05-2021 20:03)
@@ -11,7 +11,12 @@
 
   fix:
     ✔ edge and socket were not connected properly @done(09-05-2021 20:03)
-    ✔ change QUndoCommand `redo` to `do` @critical @done(21-05-2021 21:54)
+    ✔ refactor QUndoCommand, `redo` auto-executes when command is pushed (MIGHT REVERT THIS LATER IN THE FUTURE) @critical @done(21-05-2021 21:54) 
+    ✔ implement previous state in view so that op mode is mainted if the view in panned; edge dragging and rerouting @critical @done(23-05-2021 12:46)
+  
+  feature:
+    ☐ editor status bar shows mode and last stack operation
+    ✔ implement splash screen @done(23-05-2021 23:12)
 
 21-05-03:
   tasks:
@@ -27,7 +32,7 @@
 
   bug checks:
     ✔ double check newly added edges if the sockets are updated properly @done(21-05-03 19:55)
-    ☐ qt cursortype grablink not working when creating edges @low
+    ☐ qt cursortype not changing based on different modes / actions being performed @low
     ✔ try to avoid circular dependancy sockets and edges @high @done(21-05-09 00:17)
   
   feature:

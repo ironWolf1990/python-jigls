@@ -41,7 +41,7 @@ class JEdgeDragging:
             self._tempEdge.update()
             self._startSocket = startSocket
             self._dragPosition = startSocket.scenePos()
-
+            logger.debug(f"creating new edge {self._tempEdge.edgeId}")
             return True
 
         elif not startSocket.AtMaxLimit():
@@ -55,94 +55,98 @@ class JEdgeDragging:
             self._tempEdge.update()
             self._startSocket = startSocket
             self._dragPosition = startSocket.scenePos()
-
+            logger.debug(f"creating new edge {self._tempEdge.edgeId}")
             return True
 
-        logger.warning("unable to create edge")
+        logger.warning(
+            f"unable to create new edge from current socket {startSocket.socketId}"
+        )
         return False
 
-    def DragPosition(self, dragPosition: QPointF):
+    def UpdateDragPosition(self, dragPosition: QPointF):
 
         assert self._tempEdge is not None
         self._dragPosition = dragPosition
         self._tempEdge.dragPos = dragPosition
         self._tempEdge.update()
 
-    def EndDrag(
-        self, destinationSocket: QtWidgets.QGraphicsItem
-    ) -> Tuple[bool, Optional[JGraphicEdge]]:
+    def EndDrag(self, destinationSocket: QtWidgets.QGraphicsItem) -> bool:
 
         assert self._tempEdge is not None
+        flag: Optional[bool] = None
 
         if isinstance(destinationSocket, JGraphicSocket):
             # * check same socket
             if self._startSocket.socketId == destinationSocket.socketId:
                 logger.warning(f"tried connecting same socket")
-                self._tempEdge.DisconnectFromSockets()
-                self._graphicsScene.removeItem(self._tempEdge)
-                self._Reset()
-                return False, None
+                flag = False
 
             # * check if same socket type, intput type
             elif destinationSocket.socketType == JCONSTANTS.GRSOCKET.TYPE_OUTPUT:
                 logger.warning(f"tried connecting output type")
-                self._tempEdge.DisconnectFromSockets()
-                self._graphicsScene.removeItem(self._tempEdge)
-                self._Reset()
-                return False, None
+                flag = False
 
             # * check if connecttion possible, non multi connection type
             elif destinationSocket.AtMaxLimit():
                 logger.warning(f"socket cannot add edge, maxlimit")
-                self._tempEdge.DisconnectFromSockets()
-                self._graphicsScene.removeItem(self._tempEdge)
-                self._Reset()
-                return False, None
+                flag = False
 
             # * check sockets belong to same parent
             elif self._tempEdge.startSocket.nodeId == destinationSocket.nodeId:
                 logger.warning(f"socket belong to same parent")
-                self._tempEdge.DisconnectFromSockets()
-                self._graphicsScene.removeItem(self._tempEdge)
-                self._Reset()
-                return False, None
+                flag = False
 
-            else:
-                # * check dupliate edge
-                for edgeInScene in list(
-                    filter(
-                        lambda edge: isinstance(edge, JGraphicEdge)
-                        and edge.edgeId != self._tempEdge.edgeId
-                        and edge.startSocket.socketId
-                        == self._tempEdge.startSocket.socketId,
-                        self._graphicsScene.items(),
+            elif (
+                len(
+                    list(
+                        filter(
+                            lambda edge: isinstance(edge, JGraphicEdge)
+                            and isinstance(destinationSocket, JGraphicSocket)
+                            and edge.edgeId != self._tempEdge.edgeId
+                            and edge.startSocket.socketId
+                            == self._tempEdge.startSocket.socketId
+                            and edge.destinationSocket.socketId
+                            == destinationSocket.socketId,
+                            self._graphicsScene.items(),
+                        )
                     )
-                ):
-                    assert isinstance(edgeInScene, JGraphicEdge)
-                    if edgeInScene.destinationSocket is destinationSocket:
-                        logger.warning(f"duplicate edge")
-                        self._tempEdge.DisconnectFromSockets()
-                        self._graphicsScene.removeItem(self._tempEdge)
-                        self._Reset()
-                        return False, None
+                )
+                >= 1
+            ):
+                logger.warning(f"duplicate edge")
+                flag = False
 
-                # * only add edge if all above fail
+            # * only add edge if all above fail
+            else:
                 logger.debug("adding new edge")
-                self._tempEdge.destinationSocket = destinationSocket
-                return True, self._tempEdge
-                self._Reset()
+                flag = True
 
         elif not isinstance(destinationSocket, JGraphicSocket):
             logger.warning(f"clicked none socket type")
+            flag = False
+
+        if flag is None:
+            logger.error("unhandled condition")
             self._tempEdge.DisconnectFromSockets()
             self._graphicsScene.removeItem(self._tempEdge)
-            self._Reset()
-            return False, None
+            self.Reset()
+            return False
+        elif not flag:
+            self._tempEdge.DisconnectFromSockets()
+            self._graphicsScene.removeItem(self._tempEdge)
+            self.Reset()
+            return False
+        elif flag:
+            assert isinstance(destinationSocket, JGraphicSocket)
+            self._tempEdge.destinationSocket = destinationSocket
 
-        logger.error("no condition matched")
-        return False, None
+            # ! this step is done so that the logic can be handeled in redo for EdgeAddCommand
+            self._tempEdge.DisconnectFromSockets()
+            self._graphicsScene.removeItem(self._tempEdge)
+            return True
+        return False
 
-    def _Reset(self):
+    def Reset(self):
         assert isinstance(self._tempEdge, JGraphicEdge)
         self._startSocket = None
         self._destinationSocket = None
@@ -150,163 +154,105 @@ class JEdgeDragging:
         self._tempEdge = None
 
 
-# class EdgeRerouting:
-#     def __init__(self, grView: "QGraphicsView"):
-#         self.grView = grView
-#         self.start_socket = None  # store where we started re-routing the edges
-#         self.rerouting_edges = []  # edges representing the re-routing (dashed edges)
-#         self.is_rerouting = False  # are we currently re-routing?
-#         self.first_mb_release = False  # flag for detecting if we already clicked with the rerouting LMB release
+class JEdgeRerouting:
+    def __init__(self, graphicsScene: QtWidgets.QGraphicsScene):
+        self._graphicsScene = graphicsScene
 
-#     def setAffectedEdgesVisible(self, visibility: bool = True):
-#         """
-#         Show/Hide all edges connected to the `self.start_socket` where we started the re-routing
+        self._startSocket: Optional[JGraphicSocket] = None
+        self._oDestinationSocket: Optional[JGraphicSocket] = None
+        self._nDestinationSocket: Optional[JGraphicSocket] = None
+        self._dragPosition: QPointF = QPointF()
 
-#         :param visibility: ``True`` if all the affected :class:`~nodeeditor.node_edge.Edge` (s) should be shown or hidden
-#         :type visibility: ``bool``
-#         """
-#         for edge in self.getAffectedEdges():
-#             if visibility:
-#                 edge.grEdge.show()
-#             else:
-#                 edge.grEdge.hide()
+        self._tempEdge: Optional[JGraphicEdge] = None
 
-#     def resetRerouting(self):
-#         """Reset to default state. Init this feature internal variables"""
-#         self.is_rerouting = False
-#         self.start_socket = None
-#         self.first_mb_release = False
-#         # holding all rerouting edges should be empty at this point...
-#         # self.rerouting_edges = []
+    def StartRerouting(self, edge: QtWidgets.QGraphicsItem, tempDragPos: QPointF):
+        assert isinstance(edge, JGraphicEdge)
+        assert self._tempEdge is None, logger.error(
+            "re-routing a new edge while previous edge re-routing is not finished / not reset to none"
+        )
 
-#     def clearReroutingEdges(self):
-#         """Remove the helping dashed edges from the :class:`~nodeeditor.node_scene.Scene`"""
-#         self.print("clean called")
-#         while self.rerouting_edges != []:
-#             edge = self.rerouting_edges.pop()
-#             self.print("\twant to clean:", edge)
-#             edge.remove()
+        self._tempEdge = edge
+        self._startSocket = edge.startSocket
+        self._oDestinationSocket = edge.destinationSocket
+        self._dragPosition = tempDragPos
+        self._tempEdge.dragPos = tempDragPos
+        self._tempEdge.update()
+        return True
 
-#     def updateScenePos(self, x: float, y: float):
-#         """
-#         Update position of all the rerouting edges (dashed ones). Called from mouseMove event to update to new mouse position
+    def UpdateDragPosition(self, dragPosition: QPointF):
+        assert self._tempEdge is not None
+        self._dragPosition = dragPosition
+        self._tempEdge.dragPos = dragPosition
+        self._tempEdge.update()
 
-#         :param x: new X position
-#         :type x: ``float``
-#         :param y: new Y position
-#         :type y: ``float``
-#         """
-#         if self.is_rerouting:
-#             for edge in self.rerouting_edges:
-#                 if edge and edge.grEdge:
-#                     edge.grEdge.setDestination(x, y)
-#                     edge.grEdge.update()
+    def EndRerouting(self, destinationSocket: QtWidgets.QGraphicsItem) -> bool:
 
-#     def startRerouting(self, socket: "Socket"):
-#         """
-#         Method to start the re-routing. Called from the grView's state machine.
+        assert self._tempEdge is not None
+        flag: Optional[bool] = None
 
-#         :param socket: :class:`~nodeeditor.node_socket.Socket` where we started the re-routing
-#         :type socket: :class:`~nodeeditor.node_socket.Socket`
-#         """
-#         self.print("startRerouting", socket)
-#         self.is_rerouting = True
-#         self.start_socket = socket
+        if isinstance(destinationSocket, JGraphicSocket):
+            # * check same socket
+            if self._startSocket.socketId == destinationSocket.socketId:
+                logger.warning(f"tried connecting to start socket")
+                flag = False
 
-#         self.print("numEdges:", len(self.getAffectedEdges()))
-#         self.setAffectedEdgesVisible(visibility=False)
+            # * check if same socket type, output to output type
+            elif destinationSocket.socketType == JCONSTANTS.GRSOCKET.TYPE_OUTPUT:
+                logger.warning(f"tried connecting output type socket")
+                flag = False
 
-#         start_position = self.start_socket.node.getSocketScenePosition(
-#             self.start_socket
-#         )
+            # * check if connecttion possible, non multi connection type
+            elif destinationSocket.AtMaxLimit():
+                logger.warning(f"socket cannot add edge, maxlimit")
+                flag = False
 
-#         for edge in self.getAffectedEdges():
-#             other_socket = edge.getOtherSocket(self.start_socket)
+            # * check sockets belong to same parent
+            elif self._tempEdge.startSocket.nodeId == destinationSocket.nodeId:
+                logger.warning(f"socket belong to same parent")
+                flag = False
 
-#             new_edge = self.getEdgeClass()(
-#                 self.start_socket.node.scene, edge_type=edge.edge_type
-#             )
-#             new_edge.start_socket = other_socket
-#             new_edge.grEdge.setSource(
-#                 *other_socket.node.getSocketScenePosition(other_socket)
-#             )
-#             new_edge.grEdge.setDestination(*start_position)
-#             new_edge.grEdge.update()
-#             self.rerouting_edges.append(new_edge)
+            # * duplicate edge
+            elif self._oDestinationSocket.socketId == destinationSocket.socketId:
+                logger.warning(f"duplicate edge")
+                flag = False
 
-#     def stopRerouting(self, target: "Socket" = None):
-#         """
-#         Method for stopping the re-routing
+            # * only add edge if all above fail
+            else:
+                flag = True
 
-#         :param target: Target where we ended the rerouting (usually released mouse button). Provide ``Socket`` or ``None`` to cancel
-#         :type target: :class:`~nodeeditor.node_socket.Socket` or ``None``
-#         """
-#         self.print(
-#             "stopRerouting on:",
-#             target,
-#             "no change" if target == self.start_socket else "",
-#         )
+        elif not isinstance(destinationSocket, JGraphicSocket):
+            logger.warning(f"clicked none socket type")
+            flag = False
 
-#         if self.start_socket is not None:
-#             # reset start socket highlight
-#             self.start_socket.grSocket.isHighlighted = False
+        if flag is None:
+            logger.error("unhandled condition")
+            assert isinstance(self._oDestinationSocket, JGraphicSocket)
+            self._tempEdge.destinationSocket = self._oDestinationSocket
+            self.Reset()
+            return False
 
-#         # collect all affected (node, edge) tuples in the meantime.. if necessary
-#         affected_nodes = []
+        elif not flag:
+            logger.error("edge re-routing failed, reverting to previous connection")
+            assert isinstance(self._oDestinationSocket, JGraphicSocket)
+            self._tempEdge.destinationSocket = self._oDestinationSocket
+            self.Reset()
+            return False
 
-#         if target is None or target == self.start_socket:
-#             # canceling -> no change
-#             self.setAffectedEdgesVisible(visibility=True)
+        elif flag:
+            logger.debug("re-routing edge")
+            assert isinstance(destinationSocket, JGraphicSocket)
+            self._nDestinationSocket = destinationSocket
 
-#         else:
-#             # validate edges before doing anything else
-#             valid_edges, invalid_edges = self.getAffectedEdges(), []
-#             for edge in self.getAffectedEdges():
-#                 start_sock = edge.getOtherSocket(self.start_socket)
-#                 if not edge.validateEdge(start_sock, target):
-#                     # not valid edge
-#                     self.print("This edge rerouting is not valid!", edge)
-#                     invalid_edges.append(edge)
+            # ! this step is done so that the logic can be handeled in redo for EdgeAddCommand
+            assert isinstance(self._oDestinationSocket, JGraphicSocket)
+            self._tempEdge.destinationSocket = self._oDestinationSocket
+            return True
+        return False
 
-#             # remove the invalidated edges from the list
-#             for invalid_edge in invalid_edges:
-#                 valid_edges.remove(invalid_edge)
-
-#             # reconnect to new socket
-#             self.print("should reconnect from:", self.start_socket, "-->", target)
-
-#             self.setAffectedEdgesVisible(visibility=True)
-
-#             for edge in valid_edges:
-#                 for node in [edge.start_socket.node, edge.end_socket.node]:
-#                     if node not in affected_nodes:
-#                         affected_nodes.append((node, edge))
-
-#                 if target.is_input:
-#                     target.removeAllEdges(silent=True)
-
-#                 if edge.end_socket == self.start_socket:
-#                     edge.end_socket = target
-#                 else:
-#                     edge.start_socket = target
-
-#                 edge.updatePositions()
-
-#         # hide rerouting edges
-#         self.clearReroutingEdges()
-
-#         # Send notifications for all affected nodes
-#         for affected_node, edge in affected_nodes:
-#             affected_node.onEdgeConnectionChanged(edge)
-#             if edge.start_socket in affected_node.inputs:
-#                 affected_node.onInputChanged(edge.start_socket)
-#             if edge.end_socket in affected_node.inputs:
-#                 affected_node.onInputChanged(edge.end_socket)
-
-#         # store history stamp
-#         self.start_socket.node.scene.history.storeHistory(
-#             "Rerouted edges", setModified=True
-#         )
-
-#         # reset variables of this rerouting state
-#         self.resetRerouting()
+    def Reset(self):
+        assert isinstance(self._tempEdge, JGraphicEdge)
+        self._startSocket = None
+        self._oDestinationSocket = None
+        self._nDestinationSocket = None
+        self._dragPosition = QPointF()
+        self._tempEdge = None

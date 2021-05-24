@@ -18,7 +18,7 @@ class JGraphicScene(QtWidgets.QGraphicsScene):
 
         self.setBackgroundBrush(self._colorBackground)
 
-    def SetGraphicsSceneWH(self, width, height):
+    def SetWidthHeight(self, width, height):
         self.setSceneRect(-width // 2, -height // 2, width, height)
 
     def _InitVariables(self):

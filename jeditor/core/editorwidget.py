@@ -25,7 +25,7 @@ class JEditorWidget(QtWidgets.QWidget):
         self.layout_.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout_)
 
-        # * graphics scene
+        # * scene manager
         self._sceneManager = JSceneManager()
 
         # * graphic view here

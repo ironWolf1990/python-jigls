@@ -87,6 +87,48 @@ class JMenuBar(QtWidgets.QMenuBar):
             )
         )
         fileMenu.addSeparator()
+
+        # * export menu
+        exportMenu = fileMenu.addMenu("&Export")
+        exportMenu.addAction(
+            CreateAction(
+                self,
+                "&Robot Framework",
+                "Ctrl+Shift+R",
+                "export to robot framework",
+                partial(RobotFramework, self._editorWidget.sceneManager),
+            )
+        )
+        exportMenu.addAction(
+            CreateAction(
+                self,
+                "&Pytorch",
+                "Ctrl+Shift+P",
+                "export to pytorch",
+                partial(Pytorch, self._editorWidget.sceneManager),
+            )
+        )
+        exportMenu.addSeparator()
+        exportMenu.addAction(
+            CreateAction(
+                self,
+                "&PNG",
+                None,
+                "export to robot framework",
+                partial(RobotFramework, self._editorWidget.sceneManager),
+            )
+        )
+        exportMenu.addAction(
+            CreateAction(
+                self,
+                "&PDF",
+                None,
+                "export to pytorch",
+                partial(Pytorch, self._editorWidget.sceneManager),
+            )
+        )
+
+        fileMenu.addSeparator()
         fileMenu.addAction(
             CreateAction(
                 self,
@@ -107,15 +149,6 @@ class JMenuBar(QtWidgets.QMenuBar):
         )
 
         # * edit menu
-        editMenu.addAction(
-            CreateAction(
-                self,
-                "&Delete",
-                "Delete",
-                "delete graphics item(s)",
-                partial(Delete, self._editorWidget.sceneManager),
-            )
-        )
         editMenu.addAction(
             CreateAction(
                 self,
@@ -151,6 +184,16 @@ class JMenuBar(QtWidgets.QMenuBar):
                 "Ctrl+Shift+A",
                 "deselect all graphics item(s)",
                 partial(DeselectAll, self._editorWidget.sceneManager),
+            )
+        )
+        editMenu.addSeparator()
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "&Delete",
+                "Delete",
+                "delete graphics item(s)",
+                partial(Delete, self._editorWidget.sceneManager),
             )
         )
         editMenu.addSeparator()
@@ -200,6 +243,16 @@ class JMenuBar(QtWidgets.QMenuBar):
                 partial(Search, self._editorWidget.sceneManager),
             )
         )
+        editMenu.addSeparator()
+        editMenu.addAction(
+            CreateAction(
+                self,
+                "&Preferences",
+                "Ctrl+,",
+                "preferences",
+                partial(Preferences, self._editorWidget.sceneManager),
+            )
+        )
 
         # * help menu
         helpMenu.addAction(
@@ -239,10 +292,12 @@ class JMenuBar(QtWidgets.QMenuBar):
         helpMenu.addAction(
             CreateAction(
                 self,
-                "D&eveloper Debug",
+                "Sc&ene Information",
                 shortcut="Ctrl+Shift+D",
                 tooltip="jeditor dump debug log",
-                callback=partial(Debug, self._editorWidget.sceneManager),
+                callback=partial(
+                    DebugSceneInformation, self._editorWidget.sceneManager
+                ),
             )
         )
         helpMenu.addSeparator()
@@ -341,10 +396,22 @@ def Shortcuts(sceneManager: JSceneManager):
     logger.debug("shortcuts")
 
 
-def Debug(sceneManager: JSceneManager):
+def DebugSceneInformation(sceneManager: JSceneManager):
     logger.debug("debug")
-    sceneManager.DebugDump()
+    sceneManager.DebugSceneInformation()
 
 
 def About(sceneManager: JSceneManager):
     logger.debug("about")
+
+
+def Preferences(sceneManager: JSceneManager):
+    logger.debug("preferences")
+
+
+def RobotFramework(sceneManager: JSceneManager):
+    logger.debug("about")
+
+
+def Pytorch(sceneManager: JSceneManager):
+    logger.debug("preferences")

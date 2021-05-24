@@ -104,7 +104,9 @@ class JGraphicEdge(QGraphicsPathItem):
         self._dragPos = pos
         if self._destinationSocket is not None:
             self._destinationSocket.DisconnectEdge(self._edgeId)
-            logger.info("removed edge from destination socket, edge is repositioning")
+            logger.info(
+                f"removed edge from destination socket, edge is repositioning {self._edgeId}"
+            )
             self._destinationSocket = None
 
     @property

@@ -30,3 +30,9 @@ QMenu::separator {
     margin: 4px 8px;
 }
 """
+
+STYLE_SPLASH = """
+QFrame {
+    background-color: #2F4454;
+}
+"""

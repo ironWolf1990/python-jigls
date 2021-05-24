@@ -1,9 +1,18 @@
+from distutils.spawn import spawn
+from jeditor.popup.splashscreen import StartUp
 from jeditor.editormenu import JMenuBar
 from jeditor.core.constants import JCONSTANTS
 from jeditor.core.editorwidget import JEditorWidget
 import typing
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QStatusBar, QWidget
+
+
+class JStatusBar(QStatusBar):
+    def __init__(self, parent: QWidget) -> None:
+        super().__init__(parent=parent)
+
+    pass
 
 
 class JEditorWindow(QMainWindow):
@@ -17,16 +26,27 @@ class JEditorWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
+
+        self.setGeometry(200, 200, JCONSTANTS.EDITOR.WIDTH, JCONSTANTS.EDITOR.HEIGHT)
+        self.setWindowTitle(JCONSTANTS.EDITOR.TITLE)
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint)
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint)
         # self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
 
-        self.setCentralWidget(self._editorWidget)
-
         menuBar = JMenuBar(self._editorWidget)
         self.setMenuBar(menuBar)
 
+        self.setCentralWidget(self._editorWidget)
+
         self.statusBar().showMessage("this is message")
 
-        self.setGeometry(200, 200, JCONSTANTS.EDITOR.WIDTH, JCONSTANTS.EDITOR.HEIGHT)
-        self.setWindowTitle(JCONSTANTS.EDITOR.TITLE)
+    def show(self) -> None:
+        if JCONSTANTS.EDITOR.SPLASH:
+            splash = StartUp(parent=self, flags=QtCore.Qt.WindowStaysOnTopHint)
+            splash.finished.connect(self._show)
+            splash.show()
+        else:
+            self._show()
+
+    def _show(self):
+        return super().show()

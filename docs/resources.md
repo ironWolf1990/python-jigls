@@ -4,5 +4,12 @@
 4. https://tomroth.com.au/compgraph1/
 5. https://www.cs.toronto.edu/~rgrosse/courses/csc321_2018/slides/lec10.pdf
 
-https://het.as.utexas.edu/HET/Software/PyQt/
 https://colorswall.com/
+
+<!-- documentations -->
+https://het.as.utexas.edu/HET/Software/PyQt/
+
+<!-- status bars -->
+https://realpython.com/python-menus-toolbars/#building-python-status-bars-in-pyqt
+https://flylib.com/books/en/2.18.1/setting_up_the_status_bar.html
+https://www.bogotobogo.com/Qt/Qt5_QStatusBar.php
