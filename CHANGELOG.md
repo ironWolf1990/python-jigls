@@ -19,7 +19,7 @@
 - refactor when pushing commands, redo auto excecutes on push. new graphicsitems and edge disconnections are handled in redo
 - state is mainted when view is panned while edge dragging and rerouting (previous state)
 - during rerouting edge, fix logic for finding duplicate edge and reconnecting to precious edge
-- catching socket max limit during edge deserialization class method. Cause issue when copy pasting items; 
+- catching socket max limit during edge deserialization class method. Cause issue when copy pasting items
 - edges with sockets that are not copied reconnect to exsisting nodes
 
 ## [0.5.1] - 2021-05-09

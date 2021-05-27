@@ -1,11 +1,17 @@
-from distutils.spawn import spawn
 from jeditor.popup.splashscreen import StartUp
 from jeditor.editormenu import JMenuBar
 from jeditor.constants import JCONSTANTS
 from jeditor.core.editorwidget import JEditorWidget
 import typing
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QDesktopWidget, QMainWindow, QStatusBar, QWidget
+from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5.QtWidgets import (
+    QDesktopWidget,
+    QDockWidget,
+    QHBoxLayout,
+    QMainWindow,
+    QStatusBar,
+    QWidget,
+)
 
 
 class JStatusBar(QStatusBar):
@@ -41,6 +47,10 @@ class JEditorWindow(QMainWindow):
         self.setCentralWidget(self._editorWidget)
 
         self.statusBar().showMessage("this is message")
+
+        self.dockable = QDockWidget("Dockable", self)
+        self.dockable.setFloating(False)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dockable)
 
     def Center(self):
 

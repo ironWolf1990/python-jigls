@@ -1,4 +1,18 @@
 
+25-05-2021:
+  tasks:
+    ☐ imlpement content node
+    ☐ use pydantic for data serialization
+    ☐ implement property widget
+    ☐ implement file operations
+    ☐ implement dock
+
+  feature:
+    ☐ model json schema
+    ☐ model xml schema
+    ☐ implement qgraphicsgroup @low
+
+
 09-05-2021:
   tasks:
     ☐ refactor nodeId, edgeId, socketId to just Id
@@ -23,6 +37,7 @@
     ✔ implement pydantic base models @high @started(25-05-2021 15:17) @done(25-05-2021 17:21) @lasted(2h4m29s)
     ✔ editor auto centers on startup @done(24-05-2021 11:33)
     ✔ application starts on primary monitor or on screen with cursor @done(24-05-2021 23:28)
+
 
 21-05-03:
   tasks:
