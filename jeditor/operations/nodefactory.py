@@ -1,6 +1,5 @@
 from typing import Optional
 from jeditor.constants import JCONSTANTS
-from jeditor.core.contentwidget import JNodeContent
 from jeditor.core.graphicnode import JGraphicNode
 import uuid
 
@@ -24,7 +23,7 @@ class JNodeFactory:
     ):
         if nodeId is None:
             nodeId = uuid.uuid4().hex
-        node = JGraphicNode(nodeContent=JNodeContent(), nodeId=nodeId)
+        node = JGraphicNode(nodeContent=None, nodeId=nodeId)
         for _ in range(inputs):
             socketId = uuid.uuid4().hex
             node.socketManager.AddSocket(

@@ -1,7 +1,8 @@
+from jeditor.widgets.qac.contentwidget import JNodeContent
 import logging
 from pprint import pprint
 from .socketmanager import JNodeSocketManager
-from .contentwidget import JNodeContent
+
 from jeditor.constants import JCONSTANTS
 from typing import Dict, List, Optional, OrderedDict, Tuple
 from PyQt5 import QtGui, QtCore

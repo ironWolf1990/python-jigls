@@ -1,3 +1,4 @@
+from jeditor.widgets.dockwidget import ExDockWidget
 from jeditor.popup.splashscreen import StartUp
 from jeditor.editormenu import JMenuBar
 from jeditor.constants import JCONSTANTS
@@ -48,8 +49,10 @@ class JEditorWindow(QMainWindow):
 
         self.statusBar().showMessage("this is message")
 
-        self.dockable = QDockWidget("Dockable", self)
+        self.dockable = QDockWidget("Node Property Dock", self)
         self.dockable.setFloating(False)
+        self.dockable.setWidget(ExDockWidget())
+        self.dockable.setContentsMargins(0, 0, 0, 0)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dockable)
 
     def Center(self):
