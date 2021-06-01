@@ -20,6 +20,12 @@ class Section(QTreeWidgetItem):
         self.name = name
         self.setExpanded(True)
 
+    def _AddChild(self):
+        pass
+
+    def _RemoveChild(self):
+        pass
+
     def Serialize(self):
         pass
 

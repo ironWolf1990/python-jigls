@@ -13,7 +13,6 @@ from jigls.ui.graphicsocket import JGraphicsSocket
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (
     QGraphicsItem,
-    QGraphicsProxyWidget,
     QGraphicsTextItem,
     QStyleOptionGraphicsItem,
     QWidget,
@@ -23,8 +22,13 @@ logger = logging.getLogger(__name__)
 
 
 class JGraphicsNode(QGraphicsItem):
+
+    __NODE__: str = "Base Web Node"
+
     def __init__(
-        self, baseNode: JBaseNode, parent: Optional[QGraphicsItem] = None
+        self,
+        baseNode: JBaseNode,
+        parent: Optional[QGraphicsItem] = None,
     ) -> None:
 
         super().__init__(parent=parent)
@@ -42,12 +46,8 @@ class JGraphicsNode(QGraphicsItem):
         return self._baseNode
 
     @property
-    def nodeTitle(self):
-        return self.baseNode.name
-
-    @nodeTitle.setter
-    def nodeTitle(self, value: str) -> None:
-        self.baseNode.name = value
+    def nodeTypeName(self):
+        return self.__NODE__
 
     def GetNodeName(self) -> str:
         return self.baseNode.name
@@ -80,7 +80,7 @@ class JGraphicsNode(QGraphicsItem):
         return self.baseNode.AddOutputSocket(name, multiConnection=multiConnection)
 
     def initUI(self):
-        self.setZValue(1)
+        self.setZValue(1000)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsFocusable, True)
@@ -92,14 +92,14 @@ class JGraphicsNode(QGraphicsItem):
         titleFont.setItalic(True)
         titleFont.setBold(True)
 
-        titleText: QGraphicsTextItem = QGraphicsTextItem(self)
-        titleText.setDefaultTextColor(QtCore.Qt.black)
-        titleText.setFont(titleFont)
-        titleText.setPos(3 * JCONSTANTS.GRNODE.TITLE_PADDING, 0)
-        titleText.setTextWidth(
+        self._titleText: QGraphicsTextItem = QGraphicsTextItem(self)
+        self._titleText.setDefaultTextColor(QtCore.Qt.black)
+        self._titleText.setFont(titleFont)
+        self._titleText.setPos(3 * JCONSTANTS.GRNODE.TITLE_PADDING, 0)
+        self._titleText.setTextWidth(
             JCONSTANTS.GRNODE.NODE_WIDHT - 2 * JCONSTANTS.GRNODE.TITLE_PADDING
         )
-        titleText.setPlainText(self.nodeTitle)
+        self._titleText.setPlainText(self.nodeTypeName)
 
     def boundingRect(self) -> QtCore.QRectF:
         return QtCore.QRectF(
@@ -113,6 +113,7 @@ class JGraphicsNode(QGraphicsItem):
         widget: typing.Optional[QWidget],
     ) -> None:
 
+        self._titleText.setPlainText(f"X:{self.pos().x()} Y: {self.pos().y()}")
         # * title
         titlePath = QtGui.QPainterPath()
         titlePath.setFillRule(QtCore.Qt.WindingFill)
@@ -192,8 +193,6 @@ class JGraphicsNode(QGraphicsItem):
 
     def initSocketUI(self):
         for idx, socket in enumerate(self.GetInSocketList()):
-            # wk = weakref.ref(socket)()
-            # assert wk is not None
             self.__graphicsSocketList.append(
                 JGraphicsSocket(
                     parent=self,
@@ -204,8 +203,6 @@ class JGraphicsNode(QGraphicsItem):
                 )
             )
         for idx, socket in enumerate(self.GetOutSocketList()):
-            # wk = weakref.ref(socket)()
-            # assert wk is not None
             self.__graphicsSocketList.append(
                 JGraphicsSocket(
                     parent=self,

@@ -9,7 +9,7 @@ from jigls.logger import logger
 
 logger = logging.getLogger(__name__)
 
-from operator import itemgetter, attrgetter, mul
+from operator import itemgetter, attrgetter
 
 
 class JBaseNode(object):

@@ -1,3 +1,4 @@
+from jigls.widgets.contentwidget import JProxyWidget
 import logging
 import typing
 
@@ -201,9 +202,10 @@ class JGraphicView(QtWidgets.QGraphicsView):
             and self._currentMode == JCONSTANTS.GRVIEW.MODE_DEFAULT
             and isinstance(
                 self.scene().itemAt(self.mapToScene(event.pos()), QtGui.QTransform()),
-                JGraphicsNode,
+                (JGraphicsNode, JProxyWidget),
             )
         ):
+            logger.debug("got double click for dock")
             if self.tog:
                 self.SignalNodeDoubleClick.emit(weakref.ref(self.o1))  # type:ignore
                 self.tog = not self.tog
