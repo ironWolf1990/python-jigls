@@ -2,7 +2,7 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from jigls.editorwindow import JEditorWindow
+from jigls.jeditor.editorwindow import JEditorWindow
 
 
 if __name__ == "__main__":

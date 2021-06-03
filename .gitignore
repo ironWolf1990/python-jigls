@@ -92,3 +92,5 @@ setup.py
 .mypy_cache
 resources/nodez
 jigls/widgets/qac
+jigls/jcore/ccore
+testicore.py
