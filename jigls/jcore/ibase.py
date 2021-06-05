@@ -1,23 +1,30 @@
 from __future__ import annotations
+import typing
 from jigls.jcore.abstract import JAbstractBase
 
 import logging
-from typing import Any, Callable, List, Optional, Set, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 
-from jigls.jcore.ccore.operation import JOperation
+from jigls.jcore.ioperation import JOperation
 from jigls.jeditor.constants import JCONSTANTS
+
 from jigls.logger import logger
 
 logger = logging.getLogger(__name__)
 
 
 class INode(JAbstractBase):
-    def __init__(self, name: str, uid: Optional[str] = None, monitor: bool = False) -> None:
-        super().__init__(name, uid=uid)
+    def __init__(
+        self,
+        name: str,
+        uid: Optional[str] = None,
+        exec: bool = True,
+        monitor: bool = False,
+    ) -> None:
+        super().__init__(name, uid=uid, exec=exec, traceback=False)
         self._socketList: Set[ISocket] = set()
-        self._operationList: Optional[List[JOperation]] = None
-        self._monitor:bool = monitor
-        self._dirty: bool = False
+        self._operationList: Set[JOperation] = set()
+        self._monitor: bool = monitor
 
     @property
     def socketList(self):
@@ -28,65 +35,100 @@ class INode(JAbstractBase):
         return self._operationList
 
     @property
-    def dirty(self):
-        self._Dirty()
-        return self._dirty
-
-    @property
-    def monitor(self):
+    def monitor(self) -> bool:
         return self._monitor
-    
+
     @monitor.setter
-    def monitor(self, value:bool)->None:
+    def monitor(self, value: bool) -> None:
         self._monitor = value
 
-    def _Dirty(self):
-        if len(self._socketList) == 0:
-            self._dirty = False
-        else:
-            flag = True
-            for socket in self._socketList:
-                flag &= socket.dirty
-            self._dirty = flag
+    @property
+    def data(self) -> Dict[str, Any]:
+        return {socket.name: socket.data for socket in self._socketList}
 
-    def GetSocketByName(self, name:str) -> Optional[ISocket]:
+    def IsDirty(self):
+        return any(
+            socket.dirty == True
+            for socket in self._socketList
+            if socket.Type == JCONSTANTS.SOCKET.TYPE_INPUT
+        )
+
+    def GetSocketByName(self, name: str) -> Optional[ISocket]:
         socket_ = [socket for socket in self._socketList if socket.name == name]
         if len(socket_) == 0:
             logger.error(f"socket {name} does not exsist in list")
             return None
         elif len(socket_) == 1:
-            return socket_[1]
-        elif len(socket_)>1:
+            return socket_[0]
+        elif len(socket_) > 1:
             logger.error("socket with duplicate names found!")
-            raise UserWarning
+            return None
 
-    def GetSocketByUid(self, uid:str) -> Optional[ISocket]:
+    def GetSocketByUid(self, uid: str) -> Optional[ISocket]:
         socket_ = [socket for socket in self._socketList if socket.uid == uid]
         if len(socket_) == 0:
             logger.error(f"socket {uid} does not exsist in list")
             return None
         elif len(socket_) == 1:
             return socket_[0]
-        elif len(socket_) >1 :
+        elif len(socket_) > 1:
             logger.error("socket with duplicate uids found!")
-            raise UserWarning
             return None
 
     def AddSocket(self, socket: ISocket) -> None:
+        if any(socket.name == socket_.name for socket_ in self._socketList):
+            logger.error(f"socket with name {socket.name} already exsists in list")
+            return
+        if any(socket.uid == socket_.uid for socket_ in self._socketList):
+            logger.error(f"socket with uid {socket.uid} already exsists in list")
+            return
         self._socketList.add(socket)
 
     def AddOperation(self, op: JOperation):
-        self._operationList.append(op)
+        if any(op.name == op_.name for op_ in self._operationList):
+            logger.error(f"operation with name {op.name} already exsists in list")
+            return
 
-    def Compute(self):
-        pass
+        inputs = set(op.inputs)
+        sockets = set([socket.name for socket in self._socketList])
+        if not inputs.issubset(sockets):
+            logger.error(
+                f"for operation with name {op.name}, node {self.name} does not provide all inputs, missing {inputs.difference(sockets)}"
+            )
+            return
+
+        self._operationList.add(op)
+
+    def Compute(self, operation: JOperation):
+        for k, v in operation.Compute(self.data).items():
+            socket = self.GetSocketByName(k)
+            if socket is not None:
+                socket.Set(v)
+            else:
+                logger.error(
+                    f"output {k} in function {self.name}:{operation.name}:{operation.fn.__name__} not found in socket list"
+                )
 
     def _Compute(self):
-        if self._dirty:
-            logger.error(f"node {self.name} unable to compute, socket(s) are dirty")
+        if not self.exec:
+            if self.monitor:
+                logger.warning(f"node {self.name} is not an execution node")
             return
-        self.Compute()
-        return
+
+        if self.IsDirty():
+            if self.monitor:
+                logger.error(f"node {self.name} unable to compute, socket(s) are dirty")
+            return
+        if self.operationList is None:
+            if self.monitor:
+                logger.debug(f"no operation attached to {self.name}")
+            return
+
+        for operation in self.operationList:
+            self.Compute(operation)
+
+    def __repr__(self) -> str:
+        return f"{super().__repr__()} sockets:{len(self._socketList)} operations:{len(self._operationList)}"
 
 
 class ISocket(JAbstractBase):
@@ -95,26 +137,27 @@ class ISocket(JAbstractBase):
         name: str,
         pNode: INode,
         type: int,
+        uid: Optional[str] = None,
+        exec: bool = True,
         dataType: Callable = bool,
         default: Optional[Any] = None,
         execOnChange: bool = True,
         execOnConnect: bool = True,
         monitorOnChange: bool = False,
-        uid: Optional[str] = None,
     ) -> None:
-        super().__init__(name, uid=uid)
+        super().__init__(name, uid=uid, exec=exec, traceback=False)
 
         self._name: str = name
         self._pNode: INode = pNode
         self._type: int = type
         self._dataType: Callable = dataType
         self._data: Optional[Any] = default
+        self._default: Optional[Any] = default
         self._execOnChange: bool = execOnChange
         self._execOnConnect: bool = execOnConnect
         self._monitorOnChange: bool = monitorOnChange
-        self._connections: List[ISocket] = []
+        self._connections: Set[ISocket] = set()
         self._dirty: bool = True
-        self._traceback: bool = False
 
     @property
     def pNode(self) -> INode:
@@ -136,6 +179,15 @@ class ISocket(JAbstractBase):
     def data(self, value: Any) -> None:
         assert type(value) == type(self._dataType())
         self._data = value
+
+    @property
+    def default(self):
+        return self._default
+
+    @default.setter
+    def default(self, value: Any) -> None:
+        assert type(value) == type(self._dataType())
+        self._default = value
 
     @property
     def execOnChange(self):
@@ -161,7 +213,7 @@ class ISocket(JAbstractBase):
     def dirty(self, value: bool) -> None:
         self._dirty = value
         for socket in self._connections:
-            if self._traceback:
+            if self.traceback:
                 logger.debug(
                     f"node:{self.pNode.name} sock:{self.name} setting node:{socket.pNode.name} socket:{socket.name} dirty:{socket.dirty} -> {value}"
                 )
@@ -176,16 +228,24 @@ class ISocket(JAbstractBase):
         self._monitorOnChange = value
 
     @property
-    def connections(self) -> List[ISocket]:
+    def connections(self) -> typing.Set[ISocket]:
         return self._connections
 
-    @property
-    def traceback(self):
-        return self._traceback
+    def GetConnectionByName(self, name: str) -> List[ISocket]:
+        return list(
+            filter(
+                lambda socket: socket.name == name,
+                self._connections,
+            )
+        )
 
-    @traceback.setter
-    def traceback(self, value: bool) -> None:
-        self._traceback = value
+    def GetConnectionByUid(self, uid: str):
+        return list(
+            filter(
+                lambda socket: socket.uid == uid,
+                self._connections,
+            )
+        )
 
     def Connect(self, dSocket: Union[List[ISocket], ISocket]):
         if isinstance(dSocket, list):
@@ -197,6 +257,8 @@ class ISocket(JAbstractBase):
     def _Connect(self, cSocket: ISocket):
 
         # * input can connect to input (used for gouping nodes)
+        # * output can connect to input
+        # * output can connect to output (used for data forwarding)
         if (
             self.Type == JCONSTANTS.SOCKET.TYPE_INPUT
             and cSocket.Type == JCONSTANTS.SOCKET.TYPE_OUTPUT
@@ -204,45 +266,49 @@ class ISocket(JAbstractBase):
             logger.error(
                 f"node:{self.pNode.name} sock:{self.name} cannot connect to node:{cSocket.pNode.name} sock:{cSocket.name}, input cannot connect to output"
             )
-            raise UserWarning
+            return
 
         if cSocket.dataType() != self.dataType():
             logger.error(
                 f"node:{self.pNode.name} sock:{self.name} cannot connect to node:{cSocket.pNode.name} sock:{cSocket.name} ,datatype missmatch {self.data} {cSocket.dataType}"
             )
-            raise UserWarning
+            return
 
-        if (
-            len(
-                list(
-                    filter(
-                        lambda socket: socket.uid == cSocket.uid,
-                        self._connections,
-                    )
-                )
-            )
-            >= 1
-        ):
+        if len(self.GetConnectionByUid(cSocket.uid)) >= 1:
             logger.error(
-                f"node{cSocket.pNode.name} sock{cSocket.name}, already in connection list"
+                f"node:{cSocket.pNode.name} sock:{cSocket.name}, already in connection list"
             )
-            raise UserWarning
+            return
 
-        self._connections += [cSocket]
-
-        if self._execOnConnect:
+        self._connections.add(cSocket)
+        if self.exec and self._execOnConnect:
             cSocket.Set(self.data)
 
-    def _Compute(self):
+    def Disconnect(self, dSocket: Union[List[ISocket], ISocket]):
+        if isinstance(dSocket, list):
+            for socket in dSocket:
+                self._Disconnect(socket)
+        else:
+            self._Disconnect(dSocket)
 
-        if self._execOnChange:
+    def _Disconnect(self, cSocket: ISocket):
+        if len(self.GetConnectionByUid(cSocket.uid)) == 0:
+            logger.error(
+                f"node:{cSocket.pNode.name} sock:{cSocket.name} not found in connection list"
+            )
+
+        self._connections.discard(cSocket)
+        cSocket.Set(cSocket.default)
+
+    def Compute(self):
+        if self.exec and self._execOnChange:
             self._pNode._Compute()
 
     def Set(self, value):
 
         if type(self.dataType()) != type(value):
             self.dirty = True
-            if self._traceback:
+            if self.traceback:
                 logger.debug(
                     f"node:{self._pNode.name} sock:{self._name} set value {value} - is dirty"
                 )
@@ -254,7 +320,7 @@ class ISocket(JAbstractBase):
 
         if self._monitorOnChange:
             logger.debug(
-                f"node:{self._pNode.name} sock:{self._name} data:{self._data} -> {value}"
+                f"node:{self._pNode.name} sock:{self._name} dirty: {self.dirty} data:{self._data} -> {value}"
             )
 
         self._data = value
@@ -262,10 +328,11 @@ class ISocket(JAbstractBase):
         for conn in self._connections:
             conn.Set(value)
 
-        self._Compute()
+        if not self.dirty:
+            self.Compute()
+
+    def Get(self):
+        return self._data
 
     def __repr__(self) -> str:
-        return (
-            "%s type:%s dtatype:%s data:%s execOnChange:%s execOnConnect:%s monitor:%s dirty:%s connections:%s"
-            % (super().__repr__(), self._type, self._dataType, self._data, self._execOnChange, self._execOnConnect, self._monitorOnChange, self._dirty, len(self._connections))
-        )
+        return f"{super().__repr__()} name:{self._name} type:{self._type} dataType:{self._dataType} data:{self._data} execControl:{self._exec} execOnChange:{self._execOnChange} execOnConnect:{self._execOnConnect} dirty:{self._dirty} connections:{len(self._connections)}"

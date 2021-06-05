@@ -6,13 +6,22 @@ class Gate2Node(INode):
     def __init__(self, name):
         INode.__init__(self, name)
         self.A = ISocket(
-            pNode=self, name="A", type=JCONSTANTS.SOCKET.TYPE_INPUT, dataType=bool
+            pNode=self,
+            name="A",
+            type=JCONSTANTS.SOCKET.TYPE_INPUT,
+            dataType=bool,
         )
         self.B = ISocket(
-            pNode=self, name="B", type=JCONSTANTS.SOCKET.TYPE_INPUT, dataType=bool
+            pNode=self,
+            name="B",
+            type=JCONSTANTS.SOCKET.TYPE_INPUT,
+            dataType=bool,
         )
         self.C = ISocket(
-            pNode=self, name="C", type=JCONSTANTS.SOCKET.TYPE_OUTPUT, dataType=bool
+            pNode=self,
+            name="C",
+            type=JCONSTANTS.SOCKET.TYPE_OUTPUT,
+            dataType=bool,
         )
 
 
@@ -20,31 +29,36 @@ class Not(INode):
     def __init__(self, name):
         INode.__init__(self, name)
         self.A = ISocket(
-            pNode=self, name="A", type=JCONSTANTS.SOCKET.TYPE_INPUT, dataType=bool
+            pNode=self,
+            name="A",
+            type=JCONSTANTS.SOCKET.TYPE_INPUT,
+            dataType=bool,
         )
         self.B = ISocket(
-            pNode=self, name="B", type=JCONSTANTS.SOCKET.TYPE_OUTPUT, dataType=bool
+            pNode=self,
+            name="B",
+            type=JCONSTANTS.SOCKET.TYPE_OUTPUT,
+            dataType=bool,
         )
 
-    def Compute(self):
-        self.B.Set(not self.A._data)
+    def _Compute(self):
+        self.B.Set(not self.A.data)
 
 
 class And(Gate2Node):
     def __init__(self, name):
         Gate2Node.__init__(self, name)
 
-    def Compute(self):
-        self.C.Set(self.A._data and self.B._data)
+    def _Compute(self):
+        self.C.Set(self.A.data and self.B.data)
 
 
 class Or(Gate2Node):
     def __init__(self, name):
         Gate2Node.__init__(self, name)
 
-    def Compute(self):
-        super().Compute()
-        self.C.Set(self.A._data or self.B._data)
+    def _Compute(self):
+        self.C.Set(self.A.data or self.B.data)
 
 
 class Xor(Gate2Node):

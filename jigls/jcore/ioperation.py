@@ -1,8 +1,16 @@
-from jigls.jcore.abstract import JAbstractOperation
+import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union
-import operator
 
-from .data import OptionalArg
+from jigls.jcore.abstract import JAbstractOperation
+
+from jigls.logger import logger
+
+logger = logging.getLogger(__name__)
+
+
+class OptionalArg(str):
+    def __repr__(self):
+        return 'OptionalArg("%s")' % self
 
 
 class JOperation(JAbstractOperation):
@@ -17,30 +25,32 @@ class JOperation(JAbstractOperation):
         super().__init__(name=name, inputs=inputs, outputs=outputs, params=params)
         self.fn: Optional[Callable] = fn
 
-    def Compute(self, named_inputs, outputs=None):
+    def Compute(self, inputDict, outputs=None):
 
-        inputs = [
-            named_inputs[d] for d in self.inputs if not isinstance(d, OptionalArg)
-        ]
+        inputs = [inputDict[d] for d in self.inputs if not isinstance(d, OptionalArg)]
 
         optionals = {
-            n: named_inputs[n]
+            n: inputDict[n]
             for n in self.inputs
-            if isinstance(n, OptionalArg) and n in named_inputs
+            if isinstance(n, OptionalArg) and n in inputDict
         }
 
         kwargs = {k: v for d in (self.params, optionals) for k, v in d.items()}
 
-        result = self.fn(*inputs, **kwargs)  # type:ignore
+        try:
+            result = self.fn(*inputs, **kwargs)
+        except:
+            result = self.fn(*inputs)
 
         if len(self.outputs) == 1:
             result = [result]
+        elif len(self.outputs) > 1:
+            result = [result for _ in range(len(self.outputs))]
 
         result = zip(self.outputs, result)
 
         if outputs:
-            outputs = set(outputs)
-            result = filter(lambda x: x[0] in outputs, result)
+            result = filter(lambda kv: kv[0] in set(outputs), result)
 
         return dict(result)
 
@@ -48,11 +58,11 @@ class JOperation(JAbstractOperation):
         return self.fn(*args, **kwargs)
 
     def __getstate__(self):
-        return super().__getstate__().update({"fn": self.fn})
+        return super().__getstate__().update({"fn": self.fn.__name__})
 
     def __repr__(self):
         func_name = self.fn and getattr(self.fn, "__name__", None)
-        return u"%s(name='%s', needs=%s, provides=%s, fn=%s)" % (
+        return "%s(name='%s', needs=%s, provides=%s, fn=%s)" % (
             self.__class__.__name__,
             self.name,
             self.inputs,

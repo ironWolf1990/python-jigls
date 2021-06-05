@@ -1,6 +1,7 @@
 
 25-05-2021:
   tasks:
+    ✔ implement compute node @done(05-06-2021 14:05)
     ☐ imlpement content node
     ✔ use pydantic for data serialization @started(30-05-2021 15:57) @done(30-05-2021 22:38) @lasted(6h41m31s)
     ☐ implement property widget
