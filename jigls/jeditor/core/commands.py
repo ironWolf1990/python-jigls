@@ -118,17 +118,14 @@ class JEdgeRerouteCommand(QtWidgets.QUndoCommand):
         assert self._oDestinationSocket is not None
         self._edge.destnSocket = self._oDestinationSocket
 
-        # ? Disconnecting because i couldnt find the error. remove if u find it
-        self._edge.DisconnectFromSockets()
         self._edge.ReconnectToSockets()
         self._edge.update()
 
     def redo(self) -> None:
         logger.debug("EdgeRerouteCommand")
         self._edge.DisconnectFromSockets()
+        assert self._nDestinationSocket is not None
         self._edge.destnSocket = self._nDestinationSocket
 
-        # ? Disconnecting because i couldnt find the error. remove if u find it
-        self._edge.DisconnectFromSockets()
         self._edge.ReconnectToSockets()
         self._edge.update()

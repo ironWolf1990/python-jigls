@@ -1,4 +1,5 @@
 from __future__ import annotations
+from jigls.jcore.abstract import JAbstractBase
 
 import logging
 from typing import Any, Dict, Optional
@@ -11,24 +12,21 @@ from jigls.jeditor.utils import UniqueIdentifier
 logger = logging.getLogger(__name__)
 
 
-class JBaseEdge(object):
+class JBaseEdge(JAbstractBase):
     def __init__(
         self,
+        name: str,
         startSocket=JBaseSocket,
         destnSocket: Optional[JBaseSocket] = None,
         uid: Optional[str] = None,
     ) -> None:
-        self._uid: str = UniqueIdentifier() if uid is None else uid
+        super().__init__(name, uid=uid)
+
         self._startSocket: JBaseSocket = startSocket
         self._destnSocket: Optional[JBaseSocket] = destnSocket
 
-        self._startSocket.ConnectEdge(self._uid)
         if self._destnSocket is not None:
-            self._destnSocket.ConnectEdge(self._uid)
-
-    @property
-    def uid(self):
-        return self._uid
+            self._startSocket.Connect(self._destnSocket)
 
     @property
     def startSocket(self):
@@ -46,48 +44,45 @@ class JBaseEdge(object):
         self._destnSocket = destnSocket
 
     def DisconnectFromSockets(self):
-        self._startSocket.DisconnectEdge(self._uid)
         if self._destnSocket is not None:
-            self._destnSocket.DisconnectEdge(self._uid)
+            self._startSocket.Disconnect(self._destnSocket)
 
     def ReconnectToSockets(self):
-        self._startSocket.ConnectEdge(self._uid)
         if self._destnSocket is not None:
-            self._destnSocket.ConnectEdge(self._uid)
+            self._startSocket.Connect(self._destnSocket)
 
     def __repr__(self) -> str:
         return "U:%s S:%s D:%s" % (self.uid, self.startSocket, self.destnSocket)
 
-    def Serialize(self) -> JEdgeModel:
-        return JEdgeModel(
-            uid=self.uid,
-            startSocket=self.startSocket.uid,
-            destnSocket=self.destnSocket.uid,
-        )
+    def Serialize(self):
+        pass
+        # return JEdgeModel(
+        #     uid=self.uid,
+        #     startSocket=self.startSocket.uid,
+        #     destnSocket=self.destnSocket.uid,
+        # )
 
     @classmethod
-    def Deserialize(
-        cls, uid: str, startSocket: JBaseSocket, destnSocket: JBaseSocket
-    ) -> Optional[JBaseEdge]:
+    def Deserialize(cls, uid: str, startSocket: JBaseSocket, destnSocket: JBaseSocket):
+        pass
+        # if startSocket.AtMaxLimit():
+        #     logger.error(
+        #         f"E:{uid} S:{startSocket.uid} D:{destnSocket.uid}, start socket at max conection limit"
+        #     )
+        #     return None
+        # elif destnSocket.AtMaxLimit():
+        #     logger.error(
+        #         f"E:{uid} S:{startSocket.uid} D:{destnSocket.uid}, destn socket at max conection limit"
+        #     )
+        #     return None
 
-        if startSocket.AtMaxLimit():
-            logger.error(
-                f"E:{uid} S:{startSocket.uid} D:{destnSocket.uid}, start socket at max conection limit"
-            )
-            return None
-        elif destnSocket.AtMaxLimit():
-            logger.error(
-                f"E:{uid} S:{startSocket.uid} D:{destnSocket.uid}, destn socket at max conection limit"
-            )
-            return None
-
-        return JBaseEdge(uid=uid, startSocket=startSocket, destnSocket=destnSocket)
+        # return JBaseEdge(uid=uid, startSocket=startSocket, destnSocket=destnSocket)
 
     @classmethod
-    def NewEdge(cls, startSocket: JBaseSocket) -> Optional[JBaseEdge]:
+    def NewEdge(cls, startSocket: JBaseSocket):
+        pass
+        # if startSocket.AtMaxLimit():
+        #     logger.error("error deserializing edge, start socket at max limit")
+        #     return None
 
-        if startSocket.AtMaxLimit():
-            logger.error("error deserializing edge, start socket at max limit")
-            return None
-
-        return JBaseEdge(startSocket=startSocket)
+        # return JBaseEdge(startSocket=startSocket)

@@ -78,9 +78,7 @@ class JSceneManager(QtCore.QObject):
         logger.info(f"loading from file")
         self._undoStack.clear()
         self._graphicsScene.clear()
-        for gItem in self._dataStreamer.Deserialize(
-            self._fileManager.LoadFromFile(fileName=fileName)
-        ):
+        for gItem in self._dataStreamer.Deserialize(self._fileManager.LoadFromFile(fileName=fileName)):
             if gItem is None:
                 logger.error(f"deserialization error, got 'None' item")
                 continue
@@ -99,9 +97,7 @@ class JSceneManager(QtCore.QObject):
             logger.debug(f"add new edge {edge.uid()}")
 
             self.undoStack.beginMacro("add edge")
-            self.undoStack.push(
-                JEdgeAddCommand(graphicScene=self.graphicsScene, edge=edge)
-            )
+            self.undoStack.push(JEdgeAddCommand(graphicScene=self.graphicsScene, edge=edge))
             self.undoStack.endMacro()
 
             self._edgeDragging.Reset()
@@ -165,8 +161,6 @@ class JSceneManager(QtCore.QObject):
         for item in self._graphicsScene.selectedItems():
             if isinstance(item, JGraphicsNode):
                 nodeIdRemove.add(item.uid())
-                for socket in item.GetSocketList():
-                    edgeIdRemove |= set(socket.edgeList)
             elif isinstance(item, JGraphicsEdge):
                 edgeIdRemove.add(item.uid())
             elif isinstance(item, JGraphicsSocket):
@@ -200,9 +194,7 @@ class JSceneManager(QtCore.QObject):
             )
         )
         if len(node_) != 1:
-            logger.error(
-                f"error fetching node {nodeId} for removal, not found in scene"
-            )
+            logger.error(f"error fetching node {nodeId} for removal, not found in scene")
             return
 
         node__ = node_[0]
@@ -210,9 +202,7 @@ class JSceneManager(QtCore.QObject):
 
         logger.debug(f"remove node {nodeId}")
         self.undoStack.beginMacro("remove node")
-        self.undoStack.push(
-            JNodeRemoveCommand(graphicScene=self.graphicsScene, node=node__)
-        )
+        self.undoStack.push(JNodeRemoveCommand(graphicScene=self.graphicsScene, node=node__))
         self.undoStack.endMacro()
 
     def RemoveEdgeFromScene(self, edgeId: str):
@@ -223,9 +213,7 @@ class JSceneManager(QtCore.QObject):
             )
         )
         if len(edge_) != 1:
-            logger.error(
-                f"error fetching edge {edgeId} for removal, not found in scene"
-            )
+            logger.error(f"error fetching edge {edgeId} for removal, not found in scene")
             return
 
         edge__ = edge_[0]
@@ -233,9 +221,7 @@ class JSceneManager(QtCore.QObject):
 
         logger.debug(f"remove edge {edgeId}")
         self.undoStack.beginMacro("remove edge")
-        self.undoStack.push(
-            JEdgeRemoveCommand(graphicScene=self.graphicsScene, edge=edge__)
-        )
+        self.undoStack.push(JEdgeRemoveCommand(graphicScene=self.graphicsScene, edge=edge__))
         self.undoStack.endMacro()
 
     def DebugSceneInformation(self):

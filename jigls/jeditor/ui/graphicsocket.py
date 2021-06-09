@@ -1,6 +1,9 @@
+from __future__ import annotations
+from jigls.jcore.ibase import ISocket
+import typing
 from jigls.jeditor.base.socketbase import JBaseSocket
 import logging
-from typing import List, Optional, Set, TYPE_CHECKING
+from typing import List, Optional, Union
 
 from jigls.logger import logger
 from PyQt5 import QtCore, QtGui
@@ -17,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class JGraphicsSocket(QGraphicsItem):
-    def __init__(
-        self, parent: QGraphicsItem, baseSocket: JBaseSocket, pos: QtCore.QPointF
-    ) -> None:
+    def __init__(self, parent: QGraphicsItem, baseSocket: JBaseSocket, pos: QtCore.QPointF) -> None:
         super().__init__(parent=parent)
 
         self._baseSocket: JBaseSocket = baseSocket
@@ -33,9 +34,6 @@ class JGraphicsSocket(QGraphicsItem):
     def name(self):
         return self.baseSocket.name
 
-    def index(self):
-        return self.baseSocket.index
-
     def uid(self):
         return self.baseSocket.uid
 
@@ -43,25 +41,25 @@ class JGraphicsSocket(QGraphicsItem):
         return self.baseSocket.nodeId
 
     def socketType(self) -> int:
-        return self.baseSocket.type
+        return self.baseSocket.Type
 
     def multiConnection(self):
-        return self.baseSocket.multiConnection
+        return self.baseSocket.multiConnect
 
-    def edgeList(self) -> List[str]:
-        return self.baseSocket.edgeList
+    def Connect(self, dSocket: JBaseSocket):
+        return self.baseSocket.Connect(dSocket)
 
-    def ConnectEdge(self, edge: str) -> None:
-        return self.baseSocket.ConnectEdge(edge)
+    def Disconnect(self, dSocket: JBaseSocket):
+        return self.baseSocket.Disconnect(dSocket)
 
-    def DisconnectEdge(self, edge: str):
-        return self.baseSocket.DisconnectEdge(edge)
+    def ConnectionList(self) -> typing.Set[JBaseSocket]:
+        return self.baseSocket.connections  # type:ignore
+
+    def HasEdge(self, socket: JBaseSocket) -> bool:
+        return self.baseSocket.HasConnection(socket)
 
     def EdgeCount(self) -> int:
-        return self.baseSocket.EdgeCount()
-
-    def HasEdge(self, edge: str) -> bool:
-        return self.baseSocket.HasEdge(edge)
+        return len(self.baseSocket.connections)
 
     def AtMaxLimit(self) -> bool:
         return self.baseSocket.AtMaxLimit()
@@ -85,9 +83,7 @@ class JGraphicsSocket(QGraphicsItem):
     ) -> None:
 
         painter.setPen(self._penOutline)
-        painter.setBrush(
-            QtGui.QBrush(QtGui.QColor(JCONSTANTS.GRSOCKET.COLOR_BACKGROUND))
-        )
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(JCONSTANTS.GRSOCKET.COLOR_BACKGROUND)))
         if self.multiConnection():
             painter.drawRect(
                 int(-JCONSTANTS.GRSOCKET.RADIUS),
@@ -136,9 +132,7 @@ class JGraphicsSocket(QGraphicsItem):
 
         # * top position
         vertPadding = (
-            JCONSTANTS.GRNODE.TITLE_HEIGHT
-            + JCONSTANTS.GRNODE.TITLE_PADDING
-            + JCONSTANTS.GRNODE.NODE_PADDING
+            JCONSTANTS.GRNODE.TITLE_HEIGHT + JCONSTANTS.GRNODE.TITLE_PADDING + JCONSTANTS.GRNODE.NODE_PADDING
         )
         y = vertPadding + index * JCONSTANTS.GRSOCKET.SPACING
 
@@ -147,10 +141,6 @@ class JGraphicsSocket(QGraphicsItem):
             JCONSTANTS.GRSOCKET.POS_LEFT_BOTTOM,
             JCONSTANTS.GRSOCKET.POS_RIGHT_BOTTOM,
         ]:
-            y = (
-                JCONSTANTS.GRNODE.NODE_HEIGHT
-                - vertPadding
-                - index * JCONSTANTS.GRSOCKET.SPACING
-            )
+            y = JCONSTANTS.GRNODE.NODE_HEIGHT - vertPadding - index * JCONSTANTS.GRSOCKET.SPACING
 
         return QtCore.QPointF(x, y)

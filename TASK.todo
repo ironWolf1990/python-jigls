@@ -9,9 +9,16 @@
     ✔ implement simple dock @done(30-05-2021 22:38)
 
   feature:
+    ✔ implement autonode @done(09-06-2021 17:20)
     ✔ model json schema @done(30-05-2021 22:39)
-    ☐ model xml schema
+    ☐ model xml schema @low
     ☐ implement qgraphicsgroup @low
+
+  fix:
+    ✔ re-implement node base for autonode @done(09-06-2021 17:22)
+    ✔ rework edge, scene manager and edge operations @done(09-06-2021 17:22)
+    ✔ inputs can connect to output socket, but Set and Dirty is not called to avoid back prop and inifinit loop @done(09-06-2021 17:22)
+    ☐ fix broken serialization and deserialization
 
 
 09-05-2021:

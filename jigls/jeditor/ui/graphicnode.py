@@ -1,8 +1,9 @@
 from __future__ import annotations
+from jigls.jcore.ibase import ISocket
 
 import logging
 import typing
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from jigls.jeditor.base.nodebase import JBaseNode
 from jigls.jeditor.base.socketbase import JBaseSocket
@@ -58,7 +59,7 @@ class JGraphicsNode(QGraphicsItem):
     def uid(self) -> str:
         return self.baseNode.uid
 
-    def GetSocketList(self) -> List[JBaseSocket]:
+    def GetSocketList(self) -> Set[ISocket]:
         return self.baseNode.socketList
 
     def GetInSocketList(self) -> List[JBaseSocket]:
@@ -67,11 +68,11 @@ class JGraphicsNode(QGraphicsItem):
     def GetOutSocketList(self) -> List[JBaseSocket]:
         return self.baseNode.outSocketList
 
-    def GetSocketByName(self, name: str) -> List[JBaseSocket]:
+    def GetSocketByName(self, name: str) -> Optional[ISocket]:
         return self.baseNode.GetSocketByName(name)
 
-    def GetSocketByUID(self, uid: str) -> List[JBaseSocket]:
-        return self.baseNode.GetSocketByUID(uid)
+    def GetSocketByUID(self, uid: str) -> Optional[ISocket]:
+        return self.baseNode.GetSocketByUid(uid)
 
     def AddInputSocket(self, name: str, multiConnection: bool):
         return self.baseNode.AddInputSocket(name, multiConnection=multiConnection)
@@ -86,9 +87,7 @@ class JGraphicsNode(QGraphicsItem):
         self.setFlag(QGraphicsItem.ItemIsFocusable, True)
 
         # * title
-        titleFont: QtGui.QFont = QtGui.QFont(
-            JCONSTANTS.GRNODE.TITLE_FONT, JCONSTANTS.GRNODE.TITLE_FONT_SIZE
-        )
+        titleFont: QtGui.QFont = QtGui.QFont(JCONSTANTS.GRNODE.TITLE_FONT, JCONSTANTS.GRNODE.TITLE_FONT_SIZE)
         titleFont.setItalic(True)
         titleFont.setBold(True)
 
@@ -96,15 +95,11 @@ class JGraphicsNode(QGraphicsItem):
         self._titleText.setDefaultTextColor(QtCore.Qt.black)
         self._titleText.setFont(titleFont)
         self._titleText.setPos(3 * JCONSTANTS.GRNODE.TITLE_PADDING, 0)
-        self._titleText.setTextWidth(
-            JCONSTANTS.GRNODE.NODE_WIDHT - 2 * JCONSTANTS.GRNODE.TITLE_PADDING
-        )
+        self._titleText.setTextWidth(JCONSTANTS.GRNODE.NODE_WIDHT - 2 * JCONSTANTS.GRNODE.TITLE_PADDING)
         self._titleText.setPlainText(self.nodeTypeName)
 
     def boundingRect(self) -> QtCore.QRectF:
-        return QtCore.QRectF(
-            0, 0, JCONSTANTS.GRNODE.NODE_WIDHT, JCONSTANTS.GRNODE.NODE_HEIGHT
-        )
+        return QtCore.QRectF(0, 0, JCONSTANTS.GRNODE.NODE_WIDHT, JCONSTANTS.GRNODE.NODE_HEIGHT)
 
     def paint(
         self,
@@ -217,13 +212,13 @@ class JGraphicsNode(QGraphicsItem):
     def __repr__(self) -> str:
         return self.baseNode.__repr__()
 
-    def Serialize(self) -> JGrNodeModel:
-        return JGrNodeModel(
-            node=self.baseNode.Serialize(), posX=self.pos().x(), posY=self.pos().y()
-        )
+    def Serialize(self):
+        pass
+        # return JGrNodeModel(node=self.baseNode.Serialize(), posX=self.pos().x(), posY=self.pos().y())
 
     @classmethod
-    def Deserialize(cls, grNode: JGrNodeModel) -> JGraphicsNode:
-        grNode_ = JGraphicsNode(baseNode=JBaseNode.Deserialize(grNode.node))
-        grNode_.setPos(QtCore.QPointF(grNode.posX, grNode.posY))
-        return grNode_
+    def Deserialize(cls, grNode: JGrNodeModel):
+        pass
+        # grNode_ = JGraphicsNode(baseNode=JBaseNode.Deserialize(grNode.node))
+        # grNode_.setPos(QtCore.QPointF(grNode.posX, grNode.posY))
+        # return grNode_

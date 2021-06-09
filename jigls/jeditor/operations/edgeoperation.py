@@ -25,9 +25,7 @@ class JEdgeDragging(QObject):
 
         # todo enable drawing edge from input socket
         if startSocket.socketType() == JCONSTANTS.SOCKET.TYPE_INPUT:
-            logger.debug(
-                "cannot start drawing edge from input socket, select an output socket"
-            )
+            logger.debug("cannot start drawing edge from input socket, select an output socket")
             return False
 
         if startSocket.multiConnection():
@@ -58,9 +56,7 @@ class JEdgeDragging(QObject):
             logger.debug(f"creating new edge {self._tempEdge.uid()}")
             return True
 
-        logger.warning(
-            f"unable to create new edge from current socket {startSocket.uid()}"
-        )
+        logger.warning(f"unable to create new edge from current socket {startSocket.uid()}")
         return False
 
     def UpdateDragPosition(self, dragPosition: QPointF):
@@ -96,6 +92,10 @@ class JEdgeDragging(QObject):
                 logger.warning(f"socket belong to same parent")
                 flag = False
 
+            elif not isinstance(destnSocket, JGraphicsSocket):
+                logger.warning(f"clicked none socket type")
+                flag = False
+
             elif (
                 len(
                     list(
@@ -103,8 +103,7 @@ class JEdgeDragging(QObject):
                             lambda edge: isinstance(edge, JGraphicsEdge)
                             and isinstance(destnSocket, JGraphicsSocket)
                             and edge.uid() != self._tempEdge.uid()
-                            and edge.startSocket.uid()
-                            == self._tempEdge.startSocket.uid()
+                            and edge.startSocket.uid() == self._tempEdge.startSocket.uid()
                             and edge.destnSocket.uid() == destnSocket.uid(),
                             self._graphicsScene.items(),
                         )
@@ -120,18 +119,14 @@ class JEdgeDragging(QObject):
                 logger.debug("adding new edge")
                 flag = True
 
-        elif not isinstance(destnSocket, JGraphicsSocket):
-            logger.warning(f"clicked none socket type")
-            flag = False
-
         if flag is None:
             logger.error("unhandled condition")
-            self._tempEdge.DisconnectFromSockets()
+            # self._tempEdge.DisconnectFromSockets()
             self._graphicsScene.removeItem(self._tempEdge)
             self.Reset()
             return False
         elif not flag:
-            self._tempEdge.DisconnectFromSockets()
+            # self._tempEdge.DisconnectFromSockets()
             self._graphicsScene.removeItem(self._tempEdge)
             self.Reset()
             return False
@@ -139,8 +134,8 @@ class JEdgeDragging(QObject):
             assert isinstance(destnSocket, JGraphicsSocket)
             self._tempEdge.destnSocket = destnSocket
 
-            # ! this step is done so that the logic can be handeled in redo for EdgeAddCommand
-            self._tempEdge.DisconnectFromSockets()
+            # # ! this step is done so that the logic can be handeled in redo for EdgeAddCommand
+            # self._tempEdge.DisconnectFromSockets()
             self._graphicsScene.removeItem(self._tempEdge)
             return True
         return False
@@ -173,6 +168,7 @@ class JEdgeRerouting(QObject):
 
         logger.debug(f"re-routing edge {edge.uid()}")
         self._tempEdge = edge
+        self._tempEdge.DisconnectFromSockets()
         self._startSocket = edge.startSocket
         self._oDestinationSocket = edge.destnSocket
         self._dragPosition = tempDragPos
@@ -225,8 +221,7 @@ class JEdgeRerouting(QObject):
                             lambda edge: isinstance(edge, JGraphicsEdge)
                             and isinstance(destnSocket, JGraphicsSocket)
                             and edge.uid() != self._tempEdge.uid()
-                            and edge.startSocket.uid()
-                            == self._tempEdge.startSocket.uid()
+                            and edge.startSocket.uid() == self._tempEdge.startSocket.uid()
                             and edge.destnSocket.uid() == destnSocket.uid(),
                             self._graphicsScene.items(),
                         )
