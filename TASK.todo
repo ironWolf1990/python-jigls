@@ -18,6 +18,7 @@
     ✔ re-implement node base for autonode @done(09-06-2021 17:22)
     ✔ rework edge, scene manager and edge operations @done(09-06-2021 17:22)
     ✔ inputs can connect to output socket, but Set and Dirty is not called to avoid back prop and inifinit loop @done(09-06-2021 17:22)
+    ✔ fix attached edge was not getting deleted when node was getting deleted @done(09-06-2021 21:11)
     ☐ fix broken serialization and deserialization
 
 

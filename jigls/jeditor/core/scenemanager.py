@@ -164,12 +164,10 @@ class JSceneManager(QtCore.QObject):
 
                 for gSocket in item.graphicsSocketList:
                     for edge in self._graphicsScene.items():
-                        if isinstance(edge, JGraphicsEdge):
-                            if any(
-                                gSocket.uid() == socket.uid()
-                                for socket in (edge.startSocket, edge.destnSocket)
-                            ):
-                                edgeIdRemove.add(edge.uid())
+                        if isinstance(edge, JGraphicsEdge) and any(
+                            gSocket.uid() == socket.uid() for socket in (edge.startSocket, edge.destnSocket)
+                        ):
+                            edgeIdRemove.add(edge.uid())
 
             elif isinstance(item, JGraphicsEdge):
                 edgeIdRemove.add(item.uid())
