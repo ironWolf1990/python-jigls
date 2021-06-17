@@ -1,6 +1,5 @@
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
-
+from typing import Callable, Dict, List, Optional
 from jigls.jcore.abstract import JAbstractOperation
 
 from jigls.logger import logger
@@ -29,11 +28,7 @@ class JOperation(JAbstractOperation):
 
         inputs = [inputDict[d] for d in self.inputs if not isinstance(d, OptionalArg)]
 
-        optionals = {
-            n: inputDict[n]
-            for n in self.inputs
-            if isinstance(n, OptionalArg) and n in inputDict
-        }
+        optionals = {n: inputDict[n] for n in self.inputs if isinstance(n, OptionalArg) and n in inputDict}
 
         kwargs = {k: v for d in (self.params, optionals) for k, v in d.items()}
 

@@ -14,7 +14,7 @@
 
 ### Fixed
 
-- after focus selected item in view, zoomMin, zoomMax and zoomFactor go out of proportions (hen clamped centreOn group else fitInView)
+- after focus selected item in view, zoomMin, zoomMax and zoomFactor go out of proportions (when clamped centreOn group else fitInView)
 - high cpu usage (deviceCoordinatedCache mode for graphicsitems)
 - inputs can connect to output socket, but Set and Dirty is not called to avoid back prop and inifinit loop
 - fix attached edge was not getting deleted when node was getting deleted
