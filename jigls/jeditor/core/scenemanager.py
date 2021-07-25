@@ -17,7 +17,7 @@ from jigls.jeditor.ui.graphicedge import JGraphicsEdge
 from jigls.jeditor.ui.graphicnode import JGraphicsNode
 from jigls.jeditor.ui.graphicsocket import JGraphicsSocket
 from jigls.logger import logger
-from jigls.package.node import WebElementNode
+from jigls.package.node import A, B
 from PyQt5.QtCore import QObject, QPoint, QPointF, QRectF
 from PyQt5.QtWidgets import QGraphicsItem, QUndoStack
 
@@ -88,9 +88,9 @@ class JSceneManager(QObject):
         return self._clipboard
 
     def _debug(self):
-        node1 = WebElementNode(JBaseNode("WebElement Node"))
-        node2 = WebElementNode(JBaseNode("WebElement Node"))
-        node3 = WebElementNode(JBaseNode("WebElement Node"))
+        node1 = A(JBaseNode("A"))
+        node2 = B(JBaseNode("B"))
+        node3 = A(JBaseNode("A"))
 
         node1.setPos(QPointF(-350, -250))
         node2.setPos(QPointF(-75, 0))

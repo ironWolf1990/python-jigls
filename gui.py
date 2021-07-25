@@ -1,5 +1,5 @@
 from argparse import Namespace, ArgumentParser
-from jigls.package.node import Action, DisableNode, EnableNode, WebElementNode
+from jigls.package.node import A, B
 from jigls.profiler import Profile
 
 import sys
@@ -12,10 +12,8 @@ def Run():
     app = QApplication(sys.argv)
     wnd = JEditorWindow()
 
-    wnd.editorWidget.RegisterNode("WebElement", WebElementNode)
-    wnd.editorWidget.RegisterNode("Action", Action)
-    wnd.editorWidget.RegisterNode("EnableNode", EnableNode)
-    wnd.editorWidget.RegisterNode("DisableNode", DisableNode)
+    wnd.editorWidget.RegisterNode("A", A)
+    wnd.editorWidget.RegisterNode("B", B)
 
     try:
         wnd.show()

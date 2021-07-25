@@ -94,3 +94,4 @@ samples
 jbinding/amica
 !models/.gitkeep
 **/*.jigls
+jigls/package/amicanode.py
