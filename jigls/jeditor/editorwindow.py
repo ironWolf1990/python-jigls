@@ -62,7 +62,7 @@ class JEditorWindow(QMainWindow):
         self.setStatusBar(JStatusBar(self))
         self.statusBar().showMessage("this is message")
 
-        self.dockable = QDockWidget("Node Property Dock", self)
+        self.dockable = QDockWidget("Side Dock", self)
         self.dockable.setFloating(False)
         self.dockable.setContentsMargins(0, 0, 0, 0)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dockable)
