@@ -386,19 +386,23 @@ def Paste(graphicsView: JGraphicView):
 def Find(graphicsView: JGraphicView, editorWidget: QWidget):
     logger.debug("find")
 
-    def _Find(a0: str):
-        print(a0)
-
     data = graphicsView.SearchGraphicsNode()
 
     if not data:
+        logger.warning("emtpy model")
         return
 
-    searchBox = JSearchBox(editorWidget, columns=["Name", "UID", "Type"])
+    searchBox = JSearchBox(editorWidget, columns=["Name", "UID", "Type", "Description"])
 
     for idx, grNode in enumerate(data.nodes):
         assert grNode
-        searchBox.AddItems(idx, grNode.node.name, grNode.node.uid, grNode.nodeType)
+        description_: str = ""
+        description = grNode.dataContent.get("Description", None)
+
+        if description:
+            description_ = list(description.values())[0]
+
+        searchBox.AddItems(idx, [grNode.node.name, grNode.node.uid, grNode.nodeType, description_])
 
     searchBox.signalNodeUID.connect(graphicsView.FocusSelection)  # type:ignore
     searchBox.show()

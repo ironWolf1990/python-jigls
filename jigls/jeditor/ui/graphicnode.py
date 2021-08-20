@@ -5,11 +5,13 @@ import logging
 import typing
 from typing import Any, List, Optional, Set
 
+from PyQt5 import QtWidgets
+
 from jigls.jcore.ibase import ISocket
 from jigls.jeditor.base.nodebase import JBaseNode
 from jigls.jeditor.base.socketbase import JBaseSocket
 from jigls.jeditor.constants import JCONSTANTS
-from jigls.jeditor.jdantic import JGrNodeModel
+from jigls.jeditor.jdantic import JGraphNodeModel
 from jigls.jeditor.popup.nodeproperty import JNodeProperty
 from jigls.jeditor.ui.graphicsocket import JGraphicsSocket
 from jigls.jeditor.widgets import datacontent
@@ -19,6 +21,7 @@ from PyQt5.QtCore import QObject, QPointF, QRectF, Qt, QThread
 from PyQt5.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PyQt5.QtWidgets import (
     QGraphicsItem,
+    QGraphicsProxyWidget,
     QGraphicsSceneMouseEvent,
     QGraphicsTextItem,
     QStyleOptionGraphicsItem,
@@ -26,24 +29,6 @@ from PyQt5.QtWidgets import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-# class NodePropertyT(QThread):
-#     def __init__(self, parent: Optional[QObject] = None):
-#         super().__init__(parent=parent)
-
-#     def run(self):
-#         self.nodeProperty = JNodeProperty()
-#         self.nodeProperty.signalCancel.connect(self.CancelNodeProperty)  # type:ignore
-#         self.nodeProperty.signalOk.connect(self.OkNodeProperty)  # type:ignore
-#         self.nodeProperty.exec_()
-
-#     def OkNodeProperty(self, a0: bool):
-#         logger.info(f"OkNodeProperty {a0}")
-#         self.quit()
-
-#     def CancelNodeProperty(self, a0: bool):
-#         logger.info(f"CancelNodeProperty {a0}")
 
 
 class JGraphicsNode(QGraphicsItem):
@@ -69,6 +54,10 @@ class JGraphicsNode(QGraphicsItem):
         self._nodeProperty = JNodeProperty()
 
         self._titleBrush = QBrush()
+
+        self._contentWidget: Optional[QWidget] = None
+        self._contentProxyWidget = QGraphicsProxyWidget(self)
+        self._boolInitContent: bool = False
 
         self.initUI()
         self.initSocketUI()
@@ -104,6 +93,14 @@ class JGraphicsNode(QGraphicsItem):
     def graphicsSocketList(self) -> List[JGraphicsSocket]:
         return self._graphicsSocketList
 
+    @property
+    def contentWidget(self):
+        return self._contentWidget
+
+    @contentWidget.setter
+    def contentWidget(self, content: QWidget):
+        self._contentWidget = content
+
     def GetNodeName(self) -> str:
         return self.baseNode.name
 
@@ -138,7 +135,7 @@ class JGraphicsNode(QGraphicsItem):
         self._titleBrush = QBrush(QColor(color))
 
     def initUI(self):
-        self.setZValue(1)
+        self.setZValue(JCONSTANTS.ZVALUE.NODE)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsFocusable, True)
@@ -238,22 +235,8 @@ class JGraphicsNode(QGraphicsItem):
             return self._outline
         return self._outline
 
-    # def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
-    #     if change == QGraphicsItem.ItemSelectedHasChanged and self._doubleClicked:
-    #         logger.debug("node de-double selected")
-    #         self._doubleClicked = False
-    #     return super().itemChange(change, value)
-
     def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        # self._doubleClicked = True
-        # logger.debug("peropert")
-
-        # self.npt = NodePropertyT()
-        # self.npt.start()
-        # self.npt.wait()
-        # logger.debug("thread end")
-        # self.update()
-        self._nodeProperty.show()
+        self._nodeProperty.show(data=self.Serialize())
         return super().mouseDoubleClickEvent(event)
 
     def paint(
@@ -263,6 +246,11 @@ class JGraphicsNode(QGraphicsItem):
         # * init graphic socket
         if not self._graphicsSocketList:
             self.initSocketUI()
+
+        # # * init content
+        if not self._boolInitContent:
+            self._boolInitContent = True
+            self.initContent()
 
         # * title
         painter.setPen(Qt.NoPen)
@@ -305,6 +293,19 @@ class JGraphicsNode(QGraphicsItem):
                 )
             )
 
+    def initContent(self):
+        if self._contentWidget:
+            self._contentWidget.setGeometry(
+                JCONSTANTS.GRNODE.NODE_PADDING,
+                int(JCONSTANTS.GRNODE.TITLE_HEIGHT) + JCONSTANTS.GRNODE.NODE_PADDING,
+                JCONSTANTS.GRNODE.NODE_WIDHT - 2 * JCONSTANTS.GRNODE.NODE_PADDING,
+                JCONSTANTS.GRNODE.NODE_HEIGHT
+                - 2 * JCONSTANTS.GRNODE.NODE_PADDING
+                - int(JCONSTANTS.GRNODE.TITLE_HEIGHT),
+            )
+            self._contentProxyWidget.setWidget(self._contentWidget)
+            self._contentProxyWidget.setZValue(JCONSTANTS.ZVALUE.NODE_WIDGET)
+
     def _NodeNameChangeSignal(self, a0: str):
         self.name = a0
         self._titleText.setPlainText(a0)
@@ -313,7 +314,7 @@ class JGraphicsNode(QGraphicsItem):
         return f"{self.baseNode.__repr__()} nodeType:{self.nodeType}"
 
     def Serialize(self):
-        return JGrNodeModel(
+        return JGraphNodeModel(
             node=self.baseNode.Serialize(),
             nodeType=self.nodeType,
             posX=self.pos().x(),
@@ -322,7 +323,7 @@ class JGraphicsNode(QGraphicsItem):
         )
 
     @classmethod
-    def Deserialize(cls, grNode: JGrNodeModel):
+    def Deserialize(cls, grNode: JGraphNodeModel):
         logger.debug(f"deserializing {cls.__name__}")
         grNode_ = cls(baseNode=JBaseNode.Deserialize(grNode.node))
         grNode_.setPos(QPointF(grNode.posX, grNode.posY))

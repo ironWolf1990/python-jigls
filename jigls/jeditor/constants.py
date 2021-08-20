@@ -87,3 +87,9 @@ class JCONSTANTS:
     class CLIPBOARD:
         MODE_COPY: int = 1
         MODE_CUT: int = 2
+
+    class ZVALUE:
+        EDGE = -1
+        NODE = 1
+        SOCKET = 2
+        NODE_WIDGET = 3

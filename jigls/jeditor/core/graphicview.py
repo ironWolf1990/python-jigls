@@ -1,4 +1,4 @@
-from jigls.jeditor.jdantic import JModel
+from jigls.jeditor.jdantic import JGraphModel
 import logging
 import typing
 from typing import List, Optional
@@ -412,7 +412,7 @@ class JGraphicView(QGraphicsView):
             self.mapToGlobal(self.mapFromScene(self._mousePosition)), self._mousePosition
         )
 
-    def SearchGraphicsNode(self) -> Optional[JModel]:
+    def SearchGraphicsNode(self) -> Optional[JGraphModel]:
         if self._currentMode != JCONSTANTS.GRVIEW.MODE_DEFAULT:
             logger.error(f"can only perform paste action in MODE_DEFAULT, current mode {self._currentMode}")
             return None

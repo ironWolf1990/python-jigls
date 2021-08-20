@@ -1,15 +1,16 @@
-from jigls.jeditor.widgets.datacontent import DataContent
-from jigls.jeditor.widgets.connectioninfo import JConnectionInfoWidget
 import logging
 from typing import Dict, Optional
 
-from jigls.jeditor.jdantic import JGrNodeModel
+
+from jigls.jeditor.jdantic import JGraphNodeModel
+from jigls.jeditor.widgets.connectioninfo import JConnectionInfoWidget
 from jigls.jeditor.widgets.custom import JQLabel, JQLineEdit
+from jigls.jeditor.widgets.datacontent import DataContent
 from jigls.jeditor.widgets.nodeinfo import JNodeInfoWidget
 from jigls.jeditor.widgets.socketinfo import JSocketInfoWidget
 from jigls.logger import logger
 from PyQt5.QtCore import QRegExp, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QRegExpValidator
+from PyQt5.QtGui import QRegExpValidator, QCloseEvent
 from PyQt5.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -40,6 +41,7 @@ class JNodeProperty(QDialog):
 
     def initUI(self):
 
+        # self.setWindowFlag(Qt.FramelessWindowHint)
         self.setLayout(QVBoxLayout(self))
 
         self.tabs: QTabWidget = QTabWidget(self)
@@ -52,17 +54,17 @@ class JNodeProperty(QDialog):
         self.tabs.addTab(self.infoTab, "Node Info")
 
         # *socket tab
-        self.socketTab = JSocketInfoWidget(self.tabs)
-        self.tabs.addTab(self.socketTab, "Sockets Info")
+        # self.socketTab = JSocketInfoWidget(self.tabs)
+        # self.tabs.addTab(self.socketTab, "Sockets Info")
 
         # *connection tab
         self.connectionTab = JConnectionInfoWidget(self.tabs)
         self.tabs.addTab(self.connectionTab, "Connection Info")
 
         # *operation tab
-        self.functionTab = QWidget(self.tabs)
-        self.functionTab.setLayout(QVBoxLayout())
-        self.tabs.addTab(self.functionTab, "Operation Info")
+        # self.functionTab = QWidget(self.tabs)
+        # self.functionTab.setLayout(QVBoxLayout())
+        # self.tabs.addTab(self.functionTab, "Operation Info")
 
         # * data tab
         self._dataContent = DataContent(self.tabs)
@@ -73,16 +75,16 @@ class JNodeProperty(QDialog):
         self.buttonBoxLayout.addStretch()
 
         self.btnOK = QPushButton("Ok")
-        self.btnApply = QPushButton("Apply")
-        self.btnCancel = QPushButton("Cancel")
+        # self.btnApply = QPushButton("Apply")
+        # self.btnCancel = QPushButton("Cancel")
 
         self.btnOK.clicked.connect(self.ButtonPressOk)
-        self.btnApply.clicked.connect(self.ButtonPressApply)
-        self.btnCancel.clicked.connect(self.ButtonPressCancel)
+        # self.btnApply.clicked.connect(self.ButtonPressApply)
+        # self.btnCancel.clicked.connect(self.ButtonPressCancel)
 
         self.buttonBoxLayout.addWidget(self.btnOK)
-        self.buttonBoxLayout.addWidget(self.btnApply)
-        self.buttonBoxLayout.addWidget(self.btnCancel)
+        # self.buttonBoxLayout.addWidget(self.btnApply)
+        # self.buttonBoxLayout.addWidget(self.btnCancel)
 
         self.layout().addLayout(self.buttonBoxLayout)
 
@@ -101,3 +103,8 @@ class JNodeProperty(QDialog):
 
     def Deserialize(self, dataContent: Dict[str, Dict]):
         self._dataContent.Deserialize(dataContent)
+
+    def show(self, data: Optional[JGraphNodeModel] = None) -> None:
+        if data:
+            self.infoTab.Deserialize(data)
+        return super().show()

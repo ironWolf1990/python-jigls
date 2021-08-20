@@ -37,7 +37,7 @@ class JNodeModel(JBaseModel):
     socketList: List[JSocketModel]
 
 
-class JGrNodeModel(JBaseModel):
+class JGraphNodeModel(JBaseModel):
     # node: JNodeModel
     nodeType: str
     posX: float
@@ -46,7 +46,7 @@ class JGrNodeModel(JBaseModel):
     dataContent: Dict
 
 
-class JGrEdgeModel(JBaseModel):
+class JGraphEdgeModel(JBaseModel):
     uid: str
     startSocket: str
     destnSocket: str
@@ -57,6 +57,6 @@ class JGrEdgeModel(JBaseModel):
 #     edge: JEdgeModel
 
 
-class JModel(BaseModel):
-    nodes: List[Optional[JGrNodeModel]]
-    edges: List[Optional[JGrEdgeModel]]
+class JGraphModel(BaseModel):
+    nodes: List[Optional[JGraphNodeModel]]
+    edges: List[Optional[JGraphEdgeModel]]

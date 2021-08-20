@@ -1,5 +1,5 @@
 from uuid import UUID
-from jigls.jeditor.jdantic import JModel
+from jigls.jeditor.jdantic import JGraphModel
 from jigls.jeditor.constants import JCONSTANTS
 from jigls.jeditor.utils import UniqueIdentifier
 import logging
@@ -15,20 +15,20 @@ logger = logging.getLogger(__name__)
 class JClipboard(QObject):
     def __init__(self, parent: typing.Optional[QObject] = None) -> None:
         super().__init__(parent=parent)
-        self._clipboardData: Optional[JModel] = None
+        self._clipboardData: Optional[JGraphModel] = None
         self._mode: Optional[int] = None
 
-    def Cut(self, data: JModel):
+    def Cut(self, data: JGraphModel):
         self._clipboardData = None
         self._clipboardData = data
         self._mode = JCONSTANTS.CLIPBOARD.MODE_CUT
 
-    def Copy(self, data: JModel):
+    def Copy(self, data: JGraphModel):
         self._clipboardData = None
         self._clipboardData = data
         self._mode = JCONSTANTS.CLIPBOARD.MODE_COPY
 
-    def Paste(self, mousePosition: QPointF) -> Optional[JModel]:
+    def Paste(self, mousePosition: QPointF) -> Optional[JGraphModel]:
 
         if self._clipboardData is None or not self._clipboardData:
             logger.warning("copied data is empty")

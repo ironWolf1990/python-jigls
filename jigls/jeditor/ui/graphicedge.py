@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional
 
 from jigls.jeditor.constants import JCONSTANTS
 from jigls.jeditor.core.graphicedgepath import JGraphicEdgeBezier, JGraphicEdgeDirect, JGraphicEdgeSquare
-from jigls.jeditor.jdantic import JGrEdgeModel
+from jigls.jeditor.jdantic import JGraphEdgeModel
 from jigls.jeditor.utils import UniqueIdentifier
 
 from jigls.logger import logger
@@ -163,7 +163,7 @@ class JGraphicsEdge(QGraphicsPathItem):
     def Serialize(self):
         assert self.destnSocket is not None
         assert self.startSocket is not None
-        return JGrEdgeModel(
+        return JGraphEdgeModel(
             uid=self.uid(),
             startSocket=self.startSocket.uid(),
             destnSocket=self.destnSocket.uid(),

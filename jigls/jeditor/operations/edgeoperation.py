@@ -116,17 +116,18 @@ class JEdgeDragging(QObject):
                 flag = True
 
         elif not isinstance(destnSocket, JGraphicsSocket):
+            self._tempEdge.DisconnectFromSockets()
             logger.warning(f"clicked none socket type")
             flag = False
 
         if flag is None:
             logger.error("unhandled condition")
-            # self._tempEdge.DisconnectFromSockets()
+            self._tempEdge.DisconnectFromSockets()
             self._graphicsScene.removeItem(self._tempEdge)
             self.Reset()
             return False
         elif not flag:
-            # self._tempEdge.DisconnectFromSockets()
+            self._tempEdge.DisconnectFromSockets()
             self._graphicsScene.removeItem(self._tempEdge)
             self.Reset()
             return False

@@ -1,4 +1,4 @@
-from jigls.jeditor.jdantic import JGrEdgeModel, JGrNodeModel, JModel
+from jigls.jeditor.jdantic import JGraphEdgeModel, JGraphNodeModel, JGraphModel
 from jigls.jeditor.base.nodebase import JBaseNode
 from jigls.jeditor.core.graphicscene import JGraphicScene
 from jigls.jeditor.ui.graphicsocket import JGraphicsSocket
@@ -42,10 +42,10 @@ class JModelStreamer(QtCore.QDataStream):
         for k, v in nodeDict.items():
             self.RegisterNode(k, v)
 
-    def Serialize(self, selected: bool = False) -> JModel:
+    def Serialize(self, selected: bool = False) -> JGraphModel:
 
-        nodes: List[JGrNodeModel] = []
-        edges: List[JGrEdgeModel] = []
+        nodes: List[JGraphNodeModel] = []
+        edges: List[JGraphEdgeModel] = []
 
         if not selected:
             logger.info("serializing all graphics items")
@@ -73,9 +73,9 @@ class JModelStreamer(QtCore.QDataStream):
                     if isinstance(item, JGraphicsEdge):
                         edges.append(item.Serialize())
 
-        return JModel(nodes=nodes, edges=edges)
+        return JGraphModel(nodes=nodes, edges=edges)
 
-    def Deserialize(self, data: JModel) -> Generator[Union[JGraphicsNode, JGraphicsEdge], None, None]:
+    def Deserialize(self, data: JGraphModel) -> Generator[Union[JGraphicsNode, JGraphicsEdge], None, None]:
 
         logger.info("deserializing")
 

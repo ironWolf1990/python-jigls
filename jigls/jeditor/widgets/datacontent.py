@@ -105,7 +105,7 @@ class DataContent(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent=parent)
 
-        self._property: List[Tuple[str, QWidget]] = []
+        self._data: List[Tuple[str, QWidget]] = []
         self.groupBox = QGroupBox("User data space")
         self.initUI()
 
@@ -122,8 +122,7 @@ class DataContent(QWidget):
         self.layout().addWidget(scroll)
 
     def CheckDuplicateLabel(self, label: str) -> bool:
-
-        dups = list(filter(lambda prop: prop[0] == label, self._property))
+        dups = list(filter(lambda prop: prop[0] == label, self._data))
         if len(dups) > 0:
             logger.error(f"User data content duplicate label: {label}")
             return True
@@ -135,7 +134,7 @@ class DataContent(QWidget):
 
         _property = JQComboBox(options)
         self.groupBox.layout().addRow(JQLabel(label), _property)
-        self._property.append((label, _property))
+        self._data.append((label, _property))
 
     def AddLineEdit(
         self,
@@ -149,7 +148,7 @@ class DataContent(QWidget):
 
         _property = JQLineEdit(text=text, placeholder=placeholder, readOnly=readOnly)
         self.groupBox.layout().addRow(JQLabel(label), _property)
-        self._property.append((label, _property))
+        self._data.append((label, _property))
 
     def AddTextEdit(
         self,
@@ -163,7 +162,7 @@ class DataContent(QWidget):
 
         _property = JQTextEdit(text=text, placeholder=placeholder, readOnly=readOnly)
         self.groupBox.layout().addRow(JQLabel(label), _property)
-        self._property.append((label, _property))
+        self._data.append((label, _property))
 
     def AddSectionTree(self, label: str, sectionName: str = "sectionName"):
         if self.CheckDuplicateLabel(label):
@@ -171,31 +170,48 @@ class DataContent(QWidget):
 
         _property = UserDataPropertyWidget(sectionName=sectionName)
         self.groupBox.layout().addRow(JQLabel(label), _property)
-        self._property.append((label, _property))
+        self._data.append((label, _property))
 
     def Serialize(self) -> Dict[str, Dict]:
         _dict = dict()
-        for property in self._property:
+        for property in self._data:
             _dict[property[0]] = property[1].Serialize()
         # print(json.dumps(_dict, indent=2))
         return _dict
+
+    def GetData(self, dataLable: str):
+        data = list(
+            filter(
+                lambda prop: prop[0] == dataLable,
+                self._data,
+            )
+        )
+        if len(data) == 0:
+            logger.error(f"data {dataLable} label not found in user data content")
+            return None
+        return data[0][1]
 
     def Deserialize(self, dataContent: Dict[str, Dict]):
         for label, dict_ in dataContent.items():
             dictView = iter(dict_)
             dictKey = next(dictView)
-            dictValye = dict_[dictKey]
+            dictValue = dict_[dictKey]
 
-            dups = list(
-                filter(
-                    # lambda prop: prop[0] == label and prop[1].widgetType == dictKey,
-                    lambda prop: prop[0] == label,
-                    self._property,
-                )
-            )
+            # dups = list(
+            #     filter(
+            #         # lambda prop: prop[0] == label and prop[1].widgetType == dictKey,
+            #         lambda prop: prop[0] == label,
+            #         self._data,
+            #     )
+            # )
 
-            if len(dups) > 0:
-                # logger.debug(type(dups[0][1]))
-                dups[0][1].Deserialize(dictValye)
+            # if len(dups) > 0:
+            #     # logger.debug(type(dups[0][1]))
+            #     dups[0][1].Deserialize(dictValue)
+
+            data = self.GetData(dataLable=label)
+            if data is not None:
+                data.Deserialize(dictValue)
+
             else:
-                logger.error(f"content not found {label} of type {dictKey}")
+                logger.error(f"data content {label} of type {dictKey} not found")

@@ -1,8 +1,10 @@
-from jigls.jeditor.widgets.custom import JQLabel, JQLineEdit
-from PyQt5.QtGui import QRegExpValidator
 from typing import Optional
-from PyQt5.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout
+
+from jigls.jeditor.jdantic import JGraphNodeModel
+from jigls.jeditor.widgets.custom import JQLabel, JQLineEdit
 from PyQt5.QtCore import QRegExp, Qt, pyqtSignal
+from PyQt5.QtGui import QRegExpValidator
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 
 class JNodeInfoWidget(QWidget):
@@ -13,12 +15,12 @@ class JNodeInfoWidget(QWidget):
         super().__init__(parent=parent)
 
         self.name: JQLineEdit = JQLineEdit(
-            "node name", "max length: 15", QRegExpValidator(QRegExp(r"[\w+]{15}")), readOnly=False
+            "node name", "max length: 20", QRegExpValidator(QRegExp(r"[\w+\s]{20}")), readOnly=False
         )
         self.uid: JQLineEdit = JQLineEdit("UUID4", None, readOnly=True)
         self.nodeType: JQLineEdit = JQLineEdit("BaseType", None, readOnly=True)
-        self.posX: JQLineEdit = JQLineEdit(None, "64000", readOnly=True, width=70)
-        self.posY: JQLineEdit = JQLineEdit(None, "64000", readOnly=True, width=70)
+        self.posX: JQLineEdit = JQLineEdit(None, "64000", readOnly=True, width=100)
+        self.posY: JQLineEdit = JQLineEdit(None, "64000", readOnly=True, width=100)
 
         # self.resize(650, 500)
         self.initUI()
@@ -60,5 +62,9 @@ class JNodeInfoWidget(QWidget):
     def Serialize(self):
         pass
 
-    def Populate(self):
-        pass
+    def Deserialize(self, data: JGraphNodeModel):
+        self.name.setText(data.node.name)
+        self.uid.setText(data.node.uid)
+        self.nodeType.setText(data.nodeType)
+        self.posX.setText(str(round(data.posX, 2)))
+        self.posY.setText(str(round(data.posY, 2)))

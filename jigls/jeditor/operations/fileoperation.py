@@ -1,5 +1,5 @@
 from pprint import pprint
-from jigls.jeditor.jdantic import JModel
+from jigls.jeditor.jdantic import JGraphModel
 import json
 import logging
 from typing import Dict, List, Optional
@@ -17,7 +17,7 @@ class JFileManager(QtCore.QObject):
     def __init__(self, parent: Optional[QtCore.QObject] = None) -> None:
         super().__init__(parent=parent)
 
-    def SaveFile(self, data: JModel, filename: str):
+    def SaveFile(self, data: JGraphModel, filename: str):
 
         file = None
 
@@ -41,7 +41,7 @@ class JFileManager(QtCore.QObject):
         file.write(data.json())
         file.close()
 
-    def OpenFile(self, filename: str) -> JModel:
+    def OpenFile(self, filename: str) -> JGraphModel:
 
         if not os.path.exists(filename):
             logger.error(f"{filename} not found")
@@ -49,4 +49,4 @@ class JFileManager(QtCore.QObject):
 
         logger.info(f"loading from file {filename}")
         with open(filename, "r") as file:
-            return JModel.parse_obj(json.load(file))
+            return JGraphModel.parse_obj(json.load(file))

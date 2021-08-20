@@ -76,19 +76,12 @@ class JSearchBox(QDialog):
     def _FieldChange(self, a0: str):
         self.filterModel.setFilterKeyColumn(self.columns.index(a0))
 
-    def AddItems(self, row: int, name: str, uid: str, type: str = "BaseType"):
+    def AddItems(self, index: int, content=List[str]):
 
-        nameItem = QStandardItem(name)
-        uidItem = QStandardItem(uid)
-        typeItem = QStandardItem(type)
-
-        nameItem.setEditable(False)
-        uidItem.setEditable(False)
-        typeItem.setEditable(False)
-
-        self.filterModel.sourceModel().setItem(row, 0, nameItem)
-        self.filterModel.sourceModel().setItem(row, 1, uidItem)
-        self.filterModel.sourceModel().setItem(row, 2, typeItem)
+        for idx, item in enumerate(content):
+            qitem = QStandardItem(str(item))
+            qitem.setEditable(False)
+            self.filterModel.sourceModel().setItem(index, idx, qitem)
 
     def Search(self, index: QModelIndex):
 
